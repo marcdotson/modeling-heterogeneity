@@ -10,3 +10,7 @@ The second is passive observational data on visits to car dealerships by
 brand. Both of these measures will come from a sample of 1,000 Dynata
 panelists who have agreed to be passively tracked and are in the market
 for a new or used vehicle in the next six months.
+
+For general details on GitHub usage, project organization, and project
+workflow, see [Research Assistant
+Training](https://github.com/marcdotson/ra-training).
