@@ -1,0 +1,125 @@
+---
+title: "Auto Intenders Survey"
+output: github_document
+---
+
+## Screener
+
+*Q1.1* Which of the following do you plan to purchase in the next 6 months? Select all that apply.
+
+**[MULTI-SELECT. RANDOMIZE PUNCHES 1-4. TERMINATE IF PUNCH 1 NOT SELECTED.]**
+
+  1. Vehicle (car, truck, van, etc.)
+  2. Real estate (apartment, condo, timeshare, etc.)
+  3. Lawn care equipment (lawn mower, trimmer/edger, snowblower, etc.)
+  4. Kitchen appliances (refrigerator, oven, dishwasher, etc.)
+  5. None of the above
+
+*Q1.2* Which of the following vehicle types would you consider purchasing in the next 6 months? Select all that apply.
+
+**[MULTI-SELECT. RANDOMIZE PUNCHES 1-9. TERMINATE IF PUNCH 7 NOT SELECTED.]**
+
+  1. Two-door coupe
+  2. Four-door sedan
+  3. Hatchback
+  4. Station wagon
+  5. Sports car
+  6. Minivan
+  7. Crossover or sport utility vehicle (SUV)
+  8. Truck
+  9. Van
+  10. None of the above
+
+## General
+
+*Q2.1* Would you purchase or lease a new vehicle?
+
+**[SINGLE SELECT.]**
+
+  1. Very likely to purchase or lease a new vehicle
+  2. Somewhat likely to purchase or lease a new vehicle
+  3. Somewhat unlikely to purchase or lease a new vehicle
+  4. Very unlikely to purchase or lease a new vehicle
+
+*Q2.2* Would you purchase a used vehicle?
+
+**[SINGLE SELECT.]**
+
+  1. Very likely to purchase a used vehicle
+  2. Somewhat likely to purchase a used vehicle
+  3. Somewhat unlikely to purchase a used vehicle
+  4. Very unlikely to purchase a used vehicle
+
+*Q2.3* Which of the following vehicle types have you owned? Select all that apply.
+
+**[MULTI-SELECT. RANDOMIZE PUNCHES 1-9.]**
+
+  1. Two-door coupe
+  2. Four-door sedan
+  3. Hatchback
+  4. Station wagon
+  5. Sports car
+  6. Minivan
+  7. Crossover or sport utility vehicle (SUV)
+  8. Truck
+  9. Van
+  10. None of the above
+
+*Q2.4* How many vehicles do you currently own or lease?
+
+**[NUMERIC OPEN-END. RANGE 0-10.]**
+
+*Q2.5* Why are you in the market for a vehicle in the next 6 months? Please be thorough and specific.
+
+**[OPEN-END.]**
+
+*Q2.6* What brands come to mind as something you would consider when purchasing or leasing your next vehicle?
+
+**[AUTO-SUGGEST SHORT RESPONSE WITH 8 ROWS AND “I don’t know any” checkbox.]**
+
+  1. Acura
+  2. Audi
+  3. BMW
+  4. Buick
+  5. Cadillac
+  6. Chevrolet
+  7. Chrysler
+  8. Dodge
+  9. Ferrari
+  10. Fiat
+  11. Ford
+  12. GM
+  13. GMC
+  14. Honda
+  15. Hyundai
+  16. Jeep
+  17. Kia
+  18. Lamborghini
+  19. Lexus
+  20. Mazda
+  21. Mercedes-Benz
+  22. Mitsubishi
+  23. Nissan
+  24. Porsche
+  25. RAM
+  26. Subaru
+  27. Tesla
+  28. Toyota
+  29. Volkswagen
+  30. Volvo
+
+*Q2.7* What are you expecting to pay for your next vehicle?
+
+$_____,000
+
+**[NUMERIC OPEN-END. RANGE 1-999.]**
+
+## Conjoint
+
+**[ATTRIBUTES AND LEVELS TO USE THE CONJOINT QUESTIONS.]**
+
+*Q3.1*: For each of the next 12 questions, imagine you are selecting a vehicle to purchase. Which of the following vehicles do you prefer?
+
+
+
+## Demographics
