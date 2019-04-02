@@ -16,7 +16,7 @@ SELECTED.\]**
 5.  None of the above
 
 *Q1.2* Which of the following vehicle types would you consider
-purchasing in the next 6 months? Select all that apply.
+purchasing or leasing in the next 6 months? Select all that apply.
 
 **\[MULTI-SELECT. RANDOMIZE PUNCHES 1-9. TERMINATE IF PUNCH 7 NOT
 SELECTED.\]**
@@ -72,12 +72,21 @@ that apply.
 
 **\[NUMERIC OPEN-END. RANGE 0-10.\]**
 
-*Q2.5* Why are you in the market for a vehicle in the next 6 months?
+**\[SHOW Q2.5 ONLY IF THE RESPONSE IN Q2.4 IS GREATER THAN 0.\]**
+
+*Q2.5* Are you purchasing/leasing a new vehicle to replace a current vehicle?
+
+**\[SINGLE SELECT.\]**
+
+1.  No
+2.  Yes
+
+*Q2.6* Why are you in the market for a vehicle in the next 6 months?
 Please be thorough and specific.
 
 **\[OPEN-END.\]**
 
-*Q2.6* What brands come to mind as something you would consider when
+*Q2.7* What brands come to mind as something you would consider when
 purchasing or leasing your next vehicle?
 
 **\[AUTO-SUGGEST SHORT RESPONSE WITH 8 ROWS AND “I don’t know any”
@@ -114,7 +123,7 @@ checkbox.\]**
 29. Volkswagen
 30. Volvo
 
-*Q2.7* What are you expecting to pay for your next vehicle?
+*Q2.8* What do you expect the sticker price to be for your next vehicle?
 
 $\_\_\_,000
 
