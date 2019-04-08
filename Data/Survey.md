@@ -3,8 +3,8 @@ Auto Intenders Survey
 
 ## Screener
 
-*Q1.1* Which of the following do you plan to purchase in the next 6
-months? Select all that apply.
+*Q1.1* Which of the following do you plan to purchase or lease in the
+next 6 months? Select all that apply.
 
 **\[MULTI-SELECT. RANDOMIZE PUNCHES 1-4. TERMINATE IF PUNCH 1 NOT
 SELECTED.\]**
@@ -43,7 +43,7 @@ SELECTED.\]**
 3.  Somewhat unlikely to purchase or lease a new vehicle
 4.  Very unlikely to purchase or lease a new vehicle
 
-*Q2.2* Would you purchase a used vehicle?
+*Q2.2* Would you purchase a *used* vehicle?
 
 **\[SINGLE SELECT.\]**
 
@@ -74,7 +74,8 @@ that apply.
 
 **\[SHOW Q2.5 ONLY IF THE RESPONSE IN Q2.4 IS GREATER THAN 0.\]**
 
-*Q2.5* Are you purchasing/leasing a new vehicle to replace a current vehicle?
+*Q2.5* Are you purchasing/leasing a new vehicle to replace a current
+vehicle?
 
 **\[SINGLE SELECT.\]**
 
@@ -123,7 +124,7 @@ checkbox.\]**
 29. Volkswagen
 30. Volvo
 
-*Q2.8* What do you expect the sticker price to be for your next vehicle?
+*Q2.8* What are you expecting to pay for your next vehicle?
 
 $\_\_\_,000
 
