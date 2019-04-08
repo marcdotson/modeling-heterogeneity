@@ -34,7 +34,7 @@ SELECTED.\]**
 
 ## General
 
-*Q2.1* Would you purchase or lease a new vehicle?
+*Q2.1* Would you purchase or lease a *new* vehicle?
 
 **\[SINGLE SELECT.\]**
 

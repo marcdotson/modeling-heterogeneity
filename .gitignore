@@ -3,6 +3,9 @@ Output/*
 Readings/*
 Temporary/*
 
+# Folder-specific
+Data/design.csv
+
 # R Stuff
 .Rproj.user
 .Rhistory

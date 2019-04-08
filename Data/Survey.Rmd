@@ -32,7 +32,7 @@ output: github_document
 
 ## General
 
-*Q2.1* Would you purchase or lease a new vehicle?
+*Q2.1* Would you purchase or lease a *new* vehicle?
 
 **[SINGLE SELECT.]**
 
@@ -41,7 +41,7 @@ output: github_document
   3. Somewhat unlikely to purchase or lease a new vehicle
   4. Very unlikely to purchase or lease a new vehicle
 
-*Q2.2* Would you purchase a used vehicle?
+*Q2.2* Would you purchase a *used* vehicle?
 
 **[SINGLE SELECT.]**
 
