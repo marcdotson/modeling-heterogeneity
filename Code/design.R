@@ -43,6 +43,9 @@ as_tibble(frac_design) %>%
 
 ggsave("Figures/design_balance.png", width = 8, height = 4, units = "in")
 
+# Save design matrix output.
+write.csv(frac_design, "Data/survey_design.csv")
+
 # Convert the attributes in frac_design into factors.
 temp_design <- as.data.frame(frac_design)
 for(i in 4:ncol(temp_design)) {
@@ -56,5 +59,5 @@ design <- out$x[,-1]
 rownames(design) <- NULL
 
 # Save design matrix output.
-write.csv(design, "Data/design.csv")
+write.csv(design, "Data/dummy_design.csv")
 
