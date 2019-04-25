@@ -1,8 +1,9 @@
 # Load packages.
 library(tidyverse)
 
-# Load data.
+# Load data and design.
 data <- read_csv(here::here("Data", "218329_Partial_Excel_042419.csv"))
+design <- read_csv(here::here("Data", "survey_design.csv"))
 
 # Screening checks.
 data %>% 
@@ -56,7 +57,46 @@ data_choice %>%
   geom_col() +
   facet_wrap(~ att, nrow = 2, scales = "free_x") +
   ggtitle("Count of Attribute Levels in Chosen Alternatives")
-  
+
+# Confirm that the design being used is correct.
+data %>% 
+  select(record, Q3_Version, contains("FinalConcept")) %>% 
+  gather(key = concept, value = level, -c(record, Q3_Version)) %>% 
+  separate(col = concept, into = c("concept", "task")) %>% 
+  separate(col = task, into = c("task", "alt"), sep = "r") %>% 
+  separate(col = alt, into = c("att", "alt"), sep = "c") %>% 
+  select(-c(record, concept)) %>% 
+  spread(key = att, value = level) %>% 
+  rename(version = Q3_Version) %>% 
+  mutate(
+    task = as.double(task),
+    alt = as.double(alt)
+  ) %>% 
+  left_join(
+    design %>% 
+      select(-X1)
+  ) %>% 
+  mutate(
+    diff_1 = `1` - brand,
+    diff_2 = `2` - year,
+    diff_3 = `3` - miles,
+    diff_4 = `4` - warranty,
+    diff_5 = `5` - seller,
+    diff_6 = `6` - mpg,
+    diff_7 = `7` - safety,
+    diff_8 = `8` - price
+  ) %>% 
+  summarize(
+    sum_diff_1 = sum(diff_1),
+    sum_diff_2 = sum(diff_2),
+    sum_diff_3 = sum(diff_3),
+    sum_diff_4 = sum(diff_4),
+    sum_diff_5 = sum(diff_5),
+    sum_diff_6 = sum(diff_6),
+    sum_diff_7 = sum(diff_7),
+    sum_diff_8 = sum(diff_8)
+  )
+
 # Demographics.
 data %>% 
   count(Q3_12)
