@@ -5,6 +5,7 @@ Temporary/*
 
 # Folder-specific
 Data/*design*
+Data/*partial*
 
 # R Stuff
 .Rproj.user
