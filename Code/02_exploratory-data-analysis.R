@@ -2,7 +2,7 @@
 library(tidyverse)
 
 # Load data and design.
-data <- read_csv(here::here("Data", "218329_Partial_Excel_042419.csv"))
+data <- read_csv(here::here("Data", "218329_Final_Excel_050619.csv"))
 design <- read_csv(here::here("Data", "survey_design.csv"))
 
 # Screening checks.
