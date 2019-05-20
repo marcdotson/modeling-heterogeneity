@@ -7,6 +7,7 @@ Temporary/*
 Data/*design*
 Data/*partial*
 Data/*final*
+Data/*sim_data*
 
 # R Stuff
 .Rproj.user
