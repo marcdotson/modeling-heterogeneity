@@ -11,8 +11,7 @@ data {
   
   real Theta_mean;                   // Mean of coefficients for the heterogeneity model.
   real<lower=0> Theta_scale;         // Scale of coefficients for the heterogeneity model.
-  real tau_mean;                     // Mean of scale parameters for the heterogeneity model.
-  real<lower=0> tau_scale;           // Scale of scale parameters for the heterogeneity model.
+  real<lower=0> tau_scale;           // Variation for scale parameters in the heterogeneity model.
   real<lower=0> Omega_shape;         // Shape of correlation matrix for the heterogeneity model.
   
   int<lower = 1, upper = P> Y[N, S]; // Matrix of observed choices.
@@ -38,7 +37,7 @@ transformed parameters {
 model {
   // Hyperpriors on Theta, tau, and Omega (and thus Sigma).
   to_vector(Theta) ~ normal(Theta_mean, Theta_scale);
-  tau ~ cauchy(tau_mean, tau_scale);
+  tau ~ cauchy(0, tau_scale);
   Omega ~ lkj_corr(Omega_shape);
   
   // Hierarchical multinomial logit.
