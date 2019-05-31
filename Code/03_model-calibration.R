@@ -89,17 +89,18 @@ if (geo_locat == 1) {
   Z <- tibble(intercept = rep(1, dim(X)[1])) %>% 
     bind_cols(
       final_data %>% 
-        select(Acura:Volkswagen) %>% 
-        mutate(
-          dealer_visit = Acura	+ BMW	+ Chevrolet + Chrysler + Ferrari + `Ford Motor Company` +
-            `GMC (General Motors Company)` + Honda + `Hyundai Motor` + Infiniti	+ `Kia Motors` +
-            Lexus	+ Lincoln	+ Mazda	+ `Mercedes Benz`	+ `Mitsubishi Motors`	+ `Nissan North America` +
-            Subaru + `Tesla Motors`	+ Toyota + Volkswagen
-        ) %>% 
-        select(dealer_visit) %>% 
-        mutate(dealer_visit = ifelse(dealer_visit >= 1, 1, 0))
+        select(Acura:Volkswagen)
+        # mutate(
+        #   dealer_visit = Acura	+ BMW	+ Chevrolet + Chrysler + Ferrari + `Ford Motor Company` +
+        #     `GMC (General Motors Company)` + Honda + `Hyundai Motor` + Infiniti	+ `Kia Motors` +
+        #     Lexus	+ Lincoln	+ Mazda	+ `Mercedes Benz`	+ `Mitsubishi Motors`	+ `Nissan North America` +
+        #     Subaru + `Tesla Motors`	+ Toyota + Volkswagen
+        # ) %>% 
+        # select(dealer_visit) %>% 
+        # mutate(dealer_visit = ifelse(dealer_visit >= 1, 1, 0))
     ) %>% 
     as.matrix()
+  Z <- ifelse(Z > 5, 1, Z)
 }
 if (demo_vars == 1) {
   Z <- tibble(intercept = rep(1, dim(X)[1])) %>% 
