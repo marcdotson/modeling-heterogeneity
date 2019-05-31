@@ -7,6 +7,11 @@ final_data <- read_csv(here::here("Data", "218329_Final_Excel_050619.csv"))
 survey_design <- read_csv(here::here("Data", "survey_design.csv")) %>% select(-X1)
 dummy_design <- read_csv(here::here("Data", "dummy_design.csv")) %>% select(-X1)
 
+# Indicate the model to run.
+intercept <- 0
+geo_locat <- 0
+demo_vars <- 1
+
 # Restructure choice data Y.
 Y <- final_data %>%
   select(record, contains("Q3")) %>%
@@ -79,7 +84,31 @@ for (n in 1:dim(X)[1]) {
 }
 
 # Restructure covariates Z.
-Z <- matrix(data = 1, nrow = dim(X)[1], ncol = 1)
+if (intercept == 1) Z <- matrix(data = 1, nrow = dim(X)[1], ncol = 1)
+if (geo_locat == 1) {
+  Z <- tibble(intercept = rep(1, dim(X)[1])) %>% 
+    bind_cols(
+      final_data %>% 
+        select(Acura:Volkswagen) %>% 
+        mutate(
+          dealer_visit = Acura	+ BMW	+ Chevrolet + Chrysler + Ferrari + `Ford Motor Company` +
+            `GMC (General Motors Company)` + Honda + `Hyundai Motor` + Infiniti	+ `Kia Motors` +
+            Lexus	+ Lincoln	+ Mazda	+ `Mercedes Benz`	+ `Mitsubishi Motors`	+ `Nissan North America` +
+            Subaru + `Tesla Motors`	+ Toyota + Volkswagen
+        ) %>% 
+        select(dealer_visit) %>% 
+        mutate(dealer_visit = ifelse(dealer_visit >= 1, 1, 0))
+    ) %>% 
+    as.matrix()
+}
+if (demo_vars == 1) {
+  Z <- tibble(intercept = rep(1, dim(X)[1])) %>% 
+    bind_cols(
+      final_data %>% 
+        select(Q4x1, Q4x4:Q4x6, Q4x9, Q4x10, Q4x12r1:Q4x12r4)
+    ) %>% 
+    as.matrix()
+}
 
 # MCMC --------------------------------------------------------------------
 # Load packages.
@@ -95,16 +124,14 @@ nalts <- dim(X)[3]           # Number of product alternatives per choice task.
 nvars <- dim(X)[4]           # Number of (estimable) attribute levels.
 ncovs <- ncol(Z)             # Number of respondent-level covariates.
 
-Y_new <- list()
+Y_new <- vector(mode = "list", length = nresp)
+X_new <- vector(mode = "list", length = nresp)
 for (resp in 1:nresp) {
   Y_new[[resp]] <- matrix(Y[resp, ])
+  for(scns in 1:nscns) {
+    X_new[[resp]] <- rbind(X_new[[resp]], X[resp, scns,,])
+  }
 }
-
-# > str(choice_data$X[[1]])
-# num [1:51, 1:12] 1 0 0 1 0 0 1 0 0 0 ...
-# - attr(*, "dimnames")=List of 2
-# ..$ : NULL
-# ..$ : chr [1:12] "Price" "Price" "Display.Size" "Display.Size" ...
 
 # # Indicate the hold-out sample.
 # ho_ind <- matrix(0, nrow=(nresp + nresp_ho), ncol=1)
@@ -121,28 +148,32 @@ for (resp in 1:nresp) {
 
 # Estimate the model.
 Data <- list(
-  y = choice_data$Y_calibrate[which(ho_ind!=1)],
-  X = choice_data$X_calibrate[which(ho_ind!=1)],
+  y = Y_new,
+  X = X_new,
   Z = Z
   # ho_ind = ho_ind
 )
 Prior <- list(
-  gammabar = matrix(rep(0,ncovs*nvars),ncol=nvars),
+  gammabar = matrix(rep(0, ncovs * nvars), ncol = nvars),
   Agamma = 0.01 * diag(ncovs),
   nu = nvars + 3,
   V = (nvars + 3) * diag(nvars)
 )
 Mcmc <- list(
-  R = 50000,
-  keep = 50,
+  R = 100000,
+  keep = 100,
   step = .08,
   sim_ind = 0,
   cont_ind = 0
 )
 
-
 fit <- hier_mnl(Data, Prior, Mcmc)
 
+# Save data and model output.
+run <- list(Data = Data, Prior = Prior, Mcmc = Mcmc, fit = fit)
+if (intercept == 1) write_rds(run, here::here("Output", "hmnl_intercept.RDS"))
+if (geo_locat == 1) write_rds(run, here::here("Output", "hmnl_geo-locat.RDS"))
+if (demo_vars == 1) write_rds(run, here::here("Output", "hmnl_demo-vars.RDS"))
 
 # HMC ---------------------------------------------------------------------
 # Load packages.

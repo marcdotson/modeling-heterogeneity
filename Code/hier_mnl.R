@@ -156,16 +156,16 @@ hier_mnl = function (Data, Prior, Mcmc, Cont) {
       cat(" ",r," (",round((timetoend/60)/60,2),"|",round(step,5),"|",round(bacceptr,2),"|",round(loglike,2),")",fill = TRUE)
     }
     
-    # # Print chart less often.
-    # if (r%%100 == 0) {
-    #   par(mfrow=c(2,1))
-    #   plot(llikedraw,type="l"); matplot(Gammadraw,type="l")
-    #   # if (sim_ind==0) { plot(llikedraw,type="l"); matplot(Gammadraw,type="l") }
-    #   # if (sim_ind==1) {
-    #   #   plot(llikedraw,type="l")
-    #   #   matplot(Gammadraw,type="l",col=c(1:nvars)); abline(h=Gamma,col=c(1:nvars))
-    #   # }
-    # }
+    # Print chart less often.
+    if (r%%100 == 0) {
+      par(mfrow=c(2,1))
+      plot(llikedraw,type="l"); matplot(Gammadraw,type="l")
+      # if (sim_ind==0) { plot(llikedraw,type="l"); matplot(Gammadraw,type="l") }
+      # if (sim_ind==1) {
+      #   plot(llikedraw,type="l")
+      #   matplot(Gammadraw,type="l",col=c(1:nvars)); abline(h=Gamma,col=c(1:nvars))
+      # }
+    }
     
     # Save the posterior draws.
     mkeep = r/keep

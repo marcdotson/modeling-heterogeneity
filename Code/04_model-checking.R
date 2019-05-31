@@ -1,17 +1,80 @@
-# Load model output.
-fit_centered <- read_rds(here::here("Output", "hmnl-centered_fit.RDS"))
-fit_noncentered <- read_rds(here::here("Output", "hmnl-noncentered_fit.RDS"))
-fit_conjugate <- read_rds(here::here("Output", "hmnl-conjugate-20k_fit.RDS"))
-colnames(fit_conjugate$Gammadraw) <- 
-  c(
-    "Theta[1,1]", "Theta[2,1]", "Theta[3,1]", "Theta[4,1]", "Theta[5,1]", "Theta[6,1]",
-    "Theta[7,1]", "Theta[8,1]", "Theta[9,1]", "Theta[10,1]", "Theta[11,1]", "Theta[12,1]"
-  )
-
-# Diagnostics.
+# Load Model Output -------------------------------------------------------
+# Load packages.
+library(tidyverse)
 library(bayesplot)
 library(tidybayes)
+library(bayesm)
 library(ggridges)
+
+# Indicate the model to check.
+intercept <- 0
+geo_locat <- 0
+demo_vars <- 1
+
+# Load model output.
+if (intercept == 1) run <- read_rds(here::here("Output", "hmnl_intercept.RDS"))
+if (geo_locat == 1) run <- read_rds(here::here("Output", "hmnl_geo-locat.RDS"))
+if (demo_vars == 1) run <- read_rds(here::here("Output", "hmnl_demo-vars.RDS"))
+
+# General MCMC ------------------------------------------------------------
+# Extract Data, Prior, Mcmc, and fit objects.
+Data <- run$Data
+Prior <- run$Prior
+Mcmc <- run$Mcmc
+fit <- run$fit
+
+# Check trace plots.
+fit$llikedraw %>% 
+  matrix(dimnames = list(NULL, "llike")) %>% 
+  mcmc_trace(
+    n_warmup = 500
+  )
+
+colnames(fit$Gammadraw) <- str_c("Gamma[", c(1:ncol(fit$Gammadraw)), ",1]")
+fit$Gammadraw %>% 
+  mcmc_trace(
+    n_warmup = 500,
+    facet_args = list(nrow = 5, labeller = label_parsed)
+  )
+
+# ggsave(
+#   "mcmc_trace_conjugate.png",
+#   path = here::here("Figures"),
+#   width = 12, height = 6, units = "in"
+# )
+
+# Import model fit table.
+# model_fit_table <- matrix(NA, nrow = 3, ncol = 4) %>%
+#   as_tibble() %>%
+#   rename(
+#     model = V1,
+#     lmd = V2,
+#     dic = V3,
+#     waic = V4
+#   )
+# write_rds(model_fit_table, here::here("Figures", "model_fit_table.RDS"))
+model_fit_table <- read_rds(here::here("Figures", "model_fit_table.RDS"))
+
+# Compute in-sample model fit.
+source(here::here("Code", "model_fit.R"))
+
+if (intercept == 1) {
+  model_fit_table[1,1] <- "Intercept"
+  model_fit_table[1,2:4] <- model_fit(fit = fit, n_warmup = 500, Data = Data)
+}
+if (geo_locat == 1) {
+  model_fit_table[2,1] <- "Geolocation"
+  model_fit_table[2,2:4] <- model_fit(fit = fit, n_warmup = 500, Data = Data)
+}
+if (demo_vars == 1) {
+  model_fit_table[3,1] <- "Demographics"
+  model_fit_table[3,2:4] <- model_fit(fit = fit, n_warmup = 500, Data = Data)
+}
+
+write_rds(model_fit_table, here::here("Figures", "model_fit_table.RDS"))
+
+# HMC-Specific ------------------------------------------------------------
+# Stan diagnostics.
 source(here::here("Code", "stan_utility.R"))
 
 # Check for divergences (HMC-specific).
@@ -29,7 +92,7 @@ check_rhat(fit_noncentered)
 check_rhat(fit_conjugate)
 
 # Check trace plots.
-fit_centered %>%
+fit %>%
   extract(
     inc_warmup = TRUE,
     permuted = FALSE
@@ -63,21 +126,7 @@ ggsave(
   width = 12, height = 6, units = "in"
 )
 
-fit_conjugate$Gammadraw %>% 
-  mcmc_trace(
-    n_warmup = 500,
-    facet_args = list(nrow = 2, labeller = label_parsed)
-  )
-
-ggsave(
-  "mcmc_trace_conjugate.png",
-  path = here::here("Figures"),
-  width = 12, height = 6, units = "in"
-)
-
-# Recover parameter values.
-Theta <- tibble(i = as.factor(1:ncol(sim_data$Theta)), Theta = t(sim_data$Theta))
-
+# Plot Marginals ----------------------------------------------------------
 draws_centered <- fit_centered %>% 
   spread_draws(Theta[i, j]) %>% 
   mutate(model = "centered") %>% 
@@ -90,7 +139,7 @@ draws_noncentered <- fit_noncentered %>%
   select(model, .chain, .iteration, .draw, i, j, Theta) %>% 
   ungroup()
 
-draws_conjugate <- as_tibble(fit_conjugate$Gammadraw) %>% 
+draws_intercept <- as_tibble(fit$Gammadraw) %>% 
   mutate(
     .draw = row_number(),
     .iteration = row_number()
@@ -127,11 +176,11 @@ draws %>%
     nrow = 3, 
     ncol = 4,
     scales = "free_x"
-  ) +
-  geom_vline(aes(xintercept = Theta), Theta, color = "red")
+  )
 
 ggsave(
   "mcmc_marginal_posteriors.png",
   path = here::here("Figures"),
   width = 12, height = 6, units = "in"
 )
+
