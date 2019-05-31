@@ -1,10 +1,6 @@
+# Import and Restructure Data ---------------------------------------------
 # Load packages.
 library(tidyverse)
-library(rstan)
-
-# Set Stan options.
-rstan_options(auto_write = TRUE)
-options(mc.cores = parallel::detectCores())
 
 # Load data and design.
 final_data <- read_csv(here::here("Data", "218329_Final_Excel_050619.csv"))
@@ -84,6 +80,77 @@ for (n in 1:dim(X)[1]) {
 
 # Restructure covariates Z.
 Z <- matrix(data = 1, nrow = dim(X)[1], ncol = 1)
+
+# MCMC --------------------------------------------------------------------
+# Load packages.
+library(mvtnorm)
+library(bayesm)
+
+# Load estimation routine.
+source(here::here("Code", "hier_mnl.R"))
+
+nresp <- dim(X)[1]           # Number of respondents.
+nscns <- dim(X)[2]           # Number of choice tasks per respondent.
+nalts <- dim(X)[3]           # Number of product alternatives per choice task.
+nvars <- dim(X)[4]           # Number of (estimable) attribute levels.
+ncovs <- ncol(Z)             # Number of respondent-level covariates.
+
+Y_new <- list()
+for (resp in 1:nresp) {
+  Y_new[[resp]] <- matrix(Y[resp, ])
+}
+
+# > str(choice_data$X[[1]])
+# num [1:51, 1:12] 1 0 0 1 0 0 1 0 0 0 ...
+# - attr(*, "dimnames")=List of 2
+# ..$ : NULL
+# ..$ : chr [1:12] "Price" "Price" "Display.Size" "Display.Size" ...
+
+# # Indicate the hold-out sample.
+# ho_ind <- matrix(0, nrow=(nresp + nresp_ho), ncol=1)
+# ho_ind[sample(nresp + nresp_ho, nresp_ho), ] <- 1 # Random hold-out respondents.
+# 
+# # Include hold-out tasks and hold-out sample data (with hold-out task included) as lists.
+# hold_out = list(
+#   Y=choice_data$Y_hold_out[which(ho_ind!=1)],
+#   X=choice_data$X_hold_out[which(ho_ind!=1)],
+#   ho_ind=ho_ind,
+#   Y_mis=choice_data$Y[which(ho_ind==1)],
+#   X_mis=choice_data$X[which(ho_ind==1)]
+# )
+
+# Estimate the model.
+Data <- list(
+  y = choice_data$Y_calibrate[which(ho_ind!=1)],
+  X = choice_data$X_calibrate[which(ho_ind!=1)],
+  Z = Z
+  # ho_ind = ho_ind
+)
+Prior <- list(
+  gammabar = matrix(rep(0,ncovs*nvars),ncol=nvars),
+  Agamma = 0.01 * diag(ncovs),
+  nu = nvars + 3,
+  V = (nvars + 3) * diag(nvars)
+)
+Mcmc <- list(
+  R = 50000,
+  keep = 50,
+  step = .08,
+  sim_ind = 0,
+  cont_ind = 0
+)
+
+
+fit <- hier_mnl(Data, Prior, Mcmc)
+
+
+# HMC ---------------------------------------------------------------------
+# Load packages.
+library(rstan)
+
+# Set Stan options.
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores())
 
 # Specify the data for calibration in a list.
 data <- list(
