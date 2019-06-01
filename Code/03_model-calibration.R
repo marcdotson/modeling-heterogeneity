@@ -9,8 +9,9 @@ dummy_design <- read_csv(here::here("Data", "dummy_design.csv")) %>% select(-X1)
 
 # Indicate the model to run.
 intercept <- 0
-geo_locat <- 1
+geo_locat <- 0
 demo_vars <- 0
+geo_demos <- 1
 
 # Restructure choice data Y.
 Y <- final_data %>%
@@ -95,8 +96,8 @@ if (geo_locat == 1) {
         #     `GMC (General Motors Company)` + Honda + `Hyundai Motor` + Infiniti	+ `Kia Motors` +
         #     Lexus	+ Lincoln	+ Mazda	+ `Mercedes Benz`	+ `Mitsubishi Motors`	+ `Nissan North America` +
         #     Subaru + `Tesla Motors`	+ Toyota + Volkswagen
-        # ) %>% 
-        # select(dealer_visit) %>% 
+        # ) %>%
+        # select(dealer_visit) %>%
         # mutate(dealer_visit = ifelse(dealer_visit >= 1, 1, 0))
     ) %>% 
     as.matrix()
@@ -109,6 +110,27 @@ if (demo_vars == 1) {
         select(Q4x1, Q4x4:Q4x6, Q4x9, Q4x10, Q4x12r1:Q4x12r4)
     ) %>% 
     as.matrix()
+}
+if (geo_demos == 1) {
+  Z_geo <- tibble(intercept = rep(1, dim(X)[1])) %>% 
+    bind_cols(
+      final_data %>% 
+        select(Acura:Volkswagen)
+        # mutate(
+        #   dealer_visit = Acura	+ BMW	+ Chevrolet + Chrysler + Ferrari + `Ford Motor Company` +
+        #     `GMC (General Motors Company)` + Honda + `Hyundai Motor` + Infiniti	+ `Kia Motors` +
+        #     Lexus	+ Lincoln	+ Mazda	+ `Mercedes Benz`	+ `Mitsubishi Motors`	+ `Nissan North America` +
+        #     Subaru + `Tesla Motors`	+ Toyota + Volkswagen
+        # ) %>%
+        # select(dealer_visit) %>%
+        # mutate(dealer_visit = ifelse(dealer_visit >= 1, 1, 0))
+    ) %>% 
+    as.matrix()
+  Z_geo <- ifelse(Z_geo > 5, 1, Z_geo)
+  Z_demo <- final_data %>% 
+    select(Q4x1, Q4x4:Q4x6, Q4x9, Q4x10, Q4x12r1:Q4x12r4) %>% 
+    as.matrix()
+  Z <- cbind(Z_geo, Z_demo)
 }
 
 # MCMC --------------------------------------------------------------------
