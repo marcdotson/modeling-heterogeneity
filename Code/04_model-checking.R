@@ -1,24 +1,23 @@
-# Load Model Output -------------------------------------------------------
-# Load packages.
+# Load Packages -----------------------------------------------------------
 library(tidyverse)
 library(bayesplot)
 library(tidybayes)
 library(bayesm)
 library(ggridges)
 
+# General MCMC ------------------------------------------------------------
 # Indicate the model to check.
-intercept <- 0
+intercept <- 1
 geo_locat <- 0
-demo_vars <- 1
+demo_vars <- 0
 geo_demos <- 0
 
 # Load model output.
-if (intercept == 1) run <- read_rds(here::here("Output", "hmnl_intercept.RDS"))
-if (geo_locat == 1) run <- read_rds(here::here("Output", "hmnl_geo-locat.RDS"))
-if (demo_vars == 1) run <- read_rds(here::here("Output", "hmnl_demo-vars.RDS"))
-if (geo_demos == 1) run <- read_rds(here::here("Output", "hmnl_geo-demos.RDS"))
+if (intercept == 1) run <- read_rds(here::here("Output", "hmnl_intercept-100k_ho.RDS"))
+if (geo_locat == 1) run <- read_rds(here::here("Output", "hmnl_more-geo-locat-100k_ho.RDS"))
+if (demo_vars == 1) run <- read_rds(here::here("Output", "hmnl_demo-vars-100k_ho.RDS"))
+if (geo_demos == 1) run <- read_rds(here::here("Output", "hmnl_more-geo-demos-100k_ho.RDS"))
 
-# General MCMC ------------------------------------------------------------
 # Extract Data, Prior, Mcmc, and fit objects.
 Data <- run$Data
 Prior <- run$Prior
@@ -33,7 +32,7 @@ fit$llikedraw %>%
   )
 
 # colnames(fit$Gammadraw) <- str_c("Gamma[", c(1:ncol(fit$Gammadraw)), ",1]")
-# fit$Gammadraw %>% 
+# fit$Gammadraw %>%
 #   mcmc_trace(
 #     n_warmup = 500,
 #     facet_args = list(nrow = 5, labeller = label_parsed)
@@ -185,54 +184,127 @@ ggsave(
 )
 
 # Plot Marginals ----------------------------------------------------------
-draws_centered <- fit_centered %>% 
-  spread_draws(Theta[i, j]) %>% 
-  mutate(model = "centered") %>% 
-  select(model, .chain, .iteration, .draw, i, j, Theta) %>% 
-  ungroup()
-
-draws_noncentered <- fit_noncentered %>% 
-  spread_draws(Theta[i, j]) %>% 
-  mutate(model = "noncentered") %>% 
-  select(model, .chain, .iteration, .draw, i, j, Theta) %>% 
-  ungroup()
-
-draws_intercept <- as_tibble(fit$Gammadraw) %>% 
+# Intercept run.
+run <- read_rds(here::here("Output", "hmnl_intercept-100k_ho.RDS"))
+colnames(run$fit$Gammadraw) <- str_c("Gamma[", c(1:ncol(run$fit$Gammadraw)), ",1]")
+draws_intercept <- as_tibble(run$fit$Gammadraw) %>% 
   mutate(
     .draw = row_number(),
     .iteration = row_number()
   ) %>% 
-  gather(key = i, value = Theta, -c(.draw, .iteration)) %>% 
+  gather(key = i, value = Gamma, -c(.draw, .iteration)) %>% 
   separate(col = i, into = c("temp1", "i"), sep = "\\[") %>% 
   separate(col = i, into = c("i", "j"), sep = ",") %>% 
   separate(col = j, into = c("j", "temp2"), sep = "\\]") %>% 
   mutate(
-    model = "conjugate",
+    model = "Intercept",
     .chain = as.integer(1),
     i = as.integer(i),
     j = as.integer(j)
   ) %>% 
-  select(model, .chain, .iteration, .draw, i, j, Theta) %>% 
+  select(model, .chain, .iteration, .draw, i, j, Gamma) %>% 
   arrange(.iteration) %>% 
   filter(.iteration > 500)
 
-draws <- draws_centered %>% 
-  bind_rows(draws_noncentered) %>% 
-  bind_rows(draws_conjugate)
+# Demographics run.
+run <- read_rds(here::here("Output", "hmnl_demo-vars-100k_ho.RDS"))
+colnames(run$fit$Gammadraw) <- str_c("Gamma[", c(1:ncol(run$fit$Gammadraw)), ",1]")
+draws_demographics <- as_tibble(run$fit$Gammadraw) %>% 
+  mutate(
+    .draw = row_number(),
+    .iteration = row_number()
+  ) %>% 
+  gather(key = i, value = Gamma, -c(.draw, .iteration)) %>% 
+  separate(col = i, into = c("temp1", "i"), sep = "\\[") %>% 
+  separate(col = i, into = c("i", "j"), sep = ",") %>% 
+  separate(col = j, into = c("j", "temp2"), sep = "\\]") %>% 
+  mutate(
+    model = "Demographics",
+    .chain = as.integer(1),
+    i = as.integer(i),
+    j = as.integer(j)
+  ) %>% 
+  select(model, .chain, .iteration, .draw, i, j, Gamma) %>% 
+  arrange(.iteration) %>% 
+  filter(.iteration > 500)
+
+# Geolocation run.
+run <- read_rds(here::here("Output", "hmnl_more-geo-locat-100k_ho.RDS"))
+colnames(run$fit$Gammadraw) <- str_c("Gamma[", c(1:ncol(run$fit$Gammadraw)), ",1]")
+draws_geolocation <- as_tibble(run$fit$Gammadraw) %>% 
+  mutate(
+    .draw = row_number(),
+    .iteration = row_number()
+  ) %>% 
+  gather(key = i, value = Gamma, -c(.draw, .iteration)) %>% 
+  separate(col = i, into = c("temp1", "i"), sep = "\\[") %>% 
+  separate(col = i, into = c("i", "j"), sep = ",") %>% 
+  separate(col = j, into = c("j", "temp2"), sep = "\\]") %>% 
+  mutate(
+    model = "Geolocation",
+    .chain = as.integer(1),
+    i = as.integer(i),
+    j = as.integer(j)
+  ) %>% 
+  select(model, .chain, .iteration, .draw, i, j, Gamma) %>% 
+  arrange(.iteration) %>% 
+  filter(.iteration > 500)
+
+# Geolocation-demograpics run.
+run <- read_rds(here::here("Output", "hmnl_more-geo-demos-100k_ho.RDS"))
+colnames(run$fit$Gammadraw) <- str_c("Gamma[", c(1:ncol(run$fit$Gammadraw)), ",1]")
+draws_geo_demos <- as_tibble(run$fit$Gammadraw) %>% 
+  mutate(
+    .draw = row_number(),
+    .iteration = row_number()
+  ) %>% 
+  gather(key = i, value = Gamma, -c(.draw, .iteration)) %>% 
+  separate(col = i, into = c("temp1", "i"), sep = "\\[") %>% 
+  separate(col = i, into = c("i", "j"), sep = ",") %>% 
+  separate(col = j, into = c("j", "temp2"), sep = "\\]") %>% 
+  mutate(
+    model = "Geo-Demos",
+    .chain = as.integer(1),
+    i = as.integer(i),
+    j = as.integer(j)
+  ) %>% 
+  select(model, .chain, .iteration, .draw, i, j, Gamma) %>% 
+  arrange(.iteration) %>% 
+  filter(.iteration > 500)
+
+# draws_centered <- fit_centered %>% 
+#   spread_draws(Theta[i, j]) %>% 
+#   mutate(model = "centered") %>% 
+#   select(model, .chain, .iteration, .draw, i, j, Theta) %>% 
+#   ungroup()
+# 
+# draws_noncentered <- fit_noncentered %>% 
+#   spread_draws(Theta[i, j]) %>% 
+#   mutate(model = "noncentered") %>% 
+#   select(model, .chain, .iteration, .draw, i, j, Theta) %>% 
+#   ungroup()
+
+draws <- draws_intercept %>% 
+  bind_rows(draws_demographics) %>%
+  bind_rows(draws_geolocation) %>%
+  bind_rows(draws_geo_demos)
+
+# Compare intercepts.
+# Compare specific attributes/levels across/within models.
 
 draws %>% 
   mutate(
     model = factor(model),
     model = fct_relevel(
-      model, "noncentered", "centered", "conjugate"
+      model, "Intercept", "Demographics", "Geolocation", "Geo-Demos"
     )
   ) %>%
-  ggplot(aes(x = Theta, y = model)) + 
+  ggplot(aes(x = Gamma, y = model)) + 
   geom_halfeyeh(.width = c(.95, .95)) +
   facet_wrap(
     ~ as.factor(i), 
-    nrow = 3, 
-    ncol = 4,
+    nrow = 30, 
+    ncol = 50,
     scales = "free_x"
   )
 
