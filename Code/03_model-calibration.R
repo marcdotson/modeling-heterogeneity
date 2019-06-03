@@ -165,13 +165,11 @@ set.seed(42); ho_ind[sample(nresp + nhold, nhold), ] <- 1
 Data <- list(
   y = Y_new[which(ho_ind != 1)],
   X = X_new[which(ho_ind != 1)],
-  # Z = matrix(Z[which(ho_ind != 1),]),
-  Z = Z[which(ho_ind != 1),],
+  Z = matrix(Z[which(ho_ind != 1),], ncol = ncol(Z)),
   ho_ind = ho_ind,
   y_ho = Y_new[which(ho_ind == 1)],
   X_ho = X_new[which(ho_ind == 1)],
-  # Z_ho = matrix(Z[which(ho_ind == 1),])
-  Z_ho = Z[which(ho_ind == 1),]
+  Z_ho = matrix(Z[which(ho_ind == 1),], ncol = ncol(Z))
 )
 Prior <- list(
   gammabar = matrix(rep(0, ncovs * nvars), ncol = nvars),
@@ -191,9 +189,10 @@ fit <- hier_mnl(Data, Prior, Mcmc)
 
 # Save data and model output.
 run <- list(Data = Data, Prior = Prior, Mcmc = Mcmc, fit = fit)
-if (intercept == 1) write_rds(run, here::here("Output", "hmnl_intercept.RDS"))
-if (geo_locat == 1) write_rds(run, here::here("Output", "hmnl_geo-locat.RDS"))
-if (demo_vars == 1) write_rds(run, here::here("Output", "hmnl_demo-vars.RDS"))
+if (intercept == 1) write_rds(run, here::here("Output", "hmnl_intercept-100k_ho.RDS"))
+if (geo_locat == 1) write_rds(run, here::here("Output", "hmnl_geo-locat-100k_ho.RDS"))
+if (demo_vars == 1) write_rds(run, here::here("Output", "hmnl_demo-vars-100k_ho.RDS"))
+if (geo_demos == 1) write_rds(run, here::here("Output", "hmnl_geo-demos-100k_ho.RDS"))
 
 # HMC ---------------------------------------------------------------------
 # Load packages.

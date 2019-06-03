@@ -10,11 +10,13 @@ library(ggridges)
 intercept <- 0
 geo_locat <- 0
 demo_vars <- 1
+geo_demos <- 0
 
 # Load model output.
 if (intercept == 1) run <- read_rds(here::here("Output", "hmnl_intercept.RDS"))
 if (geo_locat == 1) run <- read_rds(here::here("Output", "hmnl_geo-locat.RDS"))
 if (demo_vars == 1) run <- read_rds(here::here("Output", "hmnl_demo-vars.RDS"))
+if (geo_demos == 1) run <- read_rds(here::here("Output", "hmnl_geo-demos.RDS"))
 
 # General MCMC ------------------------------------------------------------
 # Extract Data, Prior, Mcmc, and fit objects.
@@ -30,13 +32,13 @@ fit$llikedraw %>%
     n_warmup = 500
   )
 
-colnames(fit$Gammadraw) <- str_c("Gamma[", c(1:ncol(fit$Gammadraw)), ",1]")
-fit$Gammadraw %>% 
-  mcmc_trace(
-    n_warmup = 500,
-    facet_args = list(nrow = 5, labeller = label_parsed)
-  )
-
+# colnames(fit$Gammadraw) <- str_c("Gamma[", c(1:ncol(fit$Gammadraw)), ",1]")
+# fit$Gammadraw %>% 
+#   mcmc_trace(
+#     n_warmup = 500,
+#     facet_args = list(nrow = 5, labeller = label_parsed)
+#   )
+# 
 # ggsave(
 #   "mcmc_trace_conjugate.png",
 #   path = here::here("Figures"),
@@ -44,13 +46,15 @@ fit$Gammadraw %>%
 # )
 
 # Import model fit table.
-# model_fit_table <- matrix(NA, nrow = 3, ncol = 4) %>%
+# model_fit_table <- matrix(NA, nrow = 6, ncol = 6) %>%
 #   as_tibble() %>%
 #   rename(
 #     model = V1,
 #     lmd = V2,
 #     dic = V3,
-#     waic = V4
+#     waic = V4,
+#     hr = V5,
+#     hp = V6
 #   )
 # write_rds(model_fit_table, here::here("Figures", "model_fit_table.RDS"))
 model_fit_table <- read_rds(here::here("Figures", "model_fit_table.RDS"))
@@ -59,19 +63,73 @@ model_fit_table <- read_rds(here::here("Figures", "model_fit_table.RDS"))
 source(here::here("Code", "model_fit.R"))
 
 if (intercept == 1) {
-  model_fit_table[1,1] <- "Intercept"
-  model_fit_table[1,2:4] <- model_fit(fit = fit, n_warmup = 500, Data = Data)
+  temp <- model_fit(fit = fit, n_warmup = 500, Data = Data)
+  model_fit_table <- model_fit_table %>% 
+    bind_rows(
+      tibble(
+        model = "Intercept 100k w/HO",
+        lmd = temp[1],
+        dic = temp[2],
+        waic = temp[3],
+        hr = temp[4],
+        hp = temp[5]
+      )
+    )
 }
 if (geo_locat == 1) {
-  model_fit_table[2,1] <- "Geolocation"
-  model_fit_table[2,2:4] <- model_fit(fit = fit, n_warmup = 500, Data = Data)
+  temp <- model_fit(fit = fit, n_warmup = 500, Data = Data)
+  model_fit_table <- model_fit_table %>% 
+    bind_rows(
+      tibble(
+        model = "Geolocation 100k w/HO",
+        lmd = temp[1],
+        dic = temp[2],
+        waic = temp[3],
+        hr = temp[4],
+        hp = temp[5]
+      )
+    )
 }
 if (demo_vars == 1) {
-  model_fit_table[3,1] <- "Demographics"
-  model_fit_table[3,2:4] <- model_fit(fit = fit, n_warmup = 500, Data = Data)
+  temp <- model_fit(fit = fit, n_warmup = 500, Data = Data)
+  model_fit_table <- model_fit_table %>% 
+    bind_rows(
+      tibble(
+        model = "Demographics 100k w/HO",
+        lmd = temp[1],
+        dic = temp[2],
+        waic = temp[3],
+        hr = temp[4],
+        hp = temp[5]
+      )
+    )
+}
+if (geo_demos == 1) {
+  temp <- model_fit(fit = fit, n_warmup = 500, Data = Data)
+  model_fit_table <- model_fit_table %>% 
+    bind_rows(
+      tibble(
+        model = "More Geo-Demos 100k w/HO",
+        lmd = temp[1],
+        dic = temp[2],
+        waic = temp[3],
+        hr = temp[4],
+        hp = temp[5]
+      )
+    )
 }
 
 write_rds(model_fit_table, here::here("Figures", "model_fit_table.RDS"))
+
+model_fit_table %>% 
+  mutate(lmd_abs = abs(lmd)) %>% 
+  summarize(
+    min_lmd = min(lmd_abs),
+    min_dic = min(dic),
+    min_waic = min(waic),
+    max_hr = max(hr, na.rm = TRUE),
+    max_hp = max(hp, na.rm = TRUE)
+  )
 
 # HMC-Specific ------------------------------------------------------------
 # Stan diagnostics.
