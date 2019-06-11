@@ -6,17 +6,20 @@ library(bayesm)
 library(ggridges)
 
 # General MCMC ------------------------------------------------------------
-# Indicate the model to check.
-intercept <- 1
-geo_locat <- 0
-demo_vars <- 0
-geo_demos <- 0
+intercept <- 0 # Intercept-only.
+geo_locat <- 0 # Geolocation covariates.
+demo_vars <- 0 # Demographic covariates.
+geo_demos <- 0 # Geolocation and demographic covariates.
+bnd_demos <- 0 # Brand covariates.
+all_three <- 1 # Geolocation, demographic, and brand covariates.
 
 # Load model output.
 if (intercept == 1) run <- read_rds(here::here("Output", "hmnl_intercept-100k_ho.RDS"))
 if (geo_locat == 1) run <- read_rds(here::here("Output", "hmnl_more-geo-locat-100k_ho.RDS"))
 if (demo_vars == 1) run <- read_rds(here::here("Output", "hmnl_demo-vars-100k_ho.RDS"))
 if (geo_demos == 1) run <- read_rds(here::here("Output", "hmnl_more-geo-demos-100k_ho.RDS"))
+if (bnd_demos == 1) run <- read_rds(here::here("Output", "hmnl_bnd-demos-100k_ho.RDS"))
+if (all_three == 1) run <- read_rds(here::here("Output", "hmnl_all-three-100k_ho.RDS"))
 
 # Extract Data, Prior, Mcmc, and fit objects.
 Data <- run$Data
@@ -109,6 +112,34 @@ if (geo_demos == 1) {
     bind_rows(
       tibble(
         model = "More Geo-Demos 100k w/HO",
+        lmd = temp[1],
+        dic = temp[2],
+        waic = temp[3],
+        hr = temp[4],
+        hp = temp[5]
+      )
+    )
+}
+if (bnd_demos == 1) {
+  temp <- model_fit(fit = fit, n_warmup = 500, Data = Data)
+  model_fit_table <- model_fit_table %>% 
+    bind_rows(
+      tibble(
+        model = "Brands 100k w/HO",
+        lmd = temp[1],
+        dic = temp[2],
+        waic = temp[3],
+        hr = temp[4],
+        hp = temp[5]
+      )
+    )
+}
+if (all_three == 1) {
+  temp <- model_fit(fit = fit, n_warmup = 500, Data = Data)
+  model_fit_table <- model_fit_table %>% 
+    bind_rows(
+      tibble(
+        model = "Geolocation, Brands, and Demographics 100k w/HO",
         lmd = temp[1],
         dic = temp[2],
         waic = temp[3],
@@ -272,45 +303,135 @@ draws_geo_demos <- as_tibble(run$fit$Gammadraw) %>%
   arrange(.iteration) %>% 
   filter(.iteration > 500)
 
+# Brand-demographics run.
+run <- read_rds(here::here("Output", "hmnl_bnd-demos-100k_ho.RDS"))
+colnames(run$fit$Gammadraw) <- str_c("Gamma[", c(1:ncol(run$fit$Gammadraw)), ",1]")
+draws_bnd_demos <- as_tibble(run$fit$Gammadraw) %>% 
+  mutate(
+    .draw = row_number(),
+    .iteration = row_number()
+  ) %>% 
+  gather(key = i, value = Gamma, -c(.draw, .iteration)) %>% 
+  separate(col = i, into = c("temp1", "i"), sep = "\\[") %>% 
+  separate(col = i, into = c("i", "j"), sep = ",") %>% 
+  separate(col = j, into = c("j", "temp2"), sep = "\\]") %>% 
+  mutate(
+    model = "Brand-Demos",
+    .chain = as.integer(1),
+    i = as.integer(i),
+    j = as.integer(j)
+  ) %>% 
+  select(model, .chain, .iteration, .draw, i, j, Gamma) %>% 
+  arrange(.iteration) %>% 
+  filter(.iteration > 500)
+
+# Geolocation, demographic, and brand run.
+run <- read_rds(here::here("Output", "hmnl_all-three-100k_ho.RDS"))
+colnames(run$fit$Gammadraw) <- str_c("Gamma[", c(1:ncol(run$fit$Gammadraw)), ",1]")
+draws_all_three <- as_tibble(run$fit$Gammadraw) %>% 
+  mutate(
+    .draw = row_number(),
+    .iteration = row_number()
+  ) %>% 
+  gather(key = i, value = Gamma, -c(.draw, .iteration)) %>% 
+  separate(col = i, into = c("temp1", "i"), sep = "\\[") %>% 
+  separate(col = i, into = c("i", "j"), sep = ",") %>% 
+  separate(col = j, into = c("j", "temp2"), sep = "\\]") %>% 
+  mutate(
+    model = "All Three",
+    .chain = as.integer(1),
+    i = as.integer(i),
+    j = as.integer(j)
+  ) %>% 
+  select(model, .chain, .iteration, .draw, i, j, Gamma) %>% 
+  arrange(.iteration) %>% 
+  filter(.iteration > 500)
+
+# Posterior means.
+posterior_means <- draws_all_three %>% 
+  group_by(i) %>% 
+  summarize(
+    mean = mean(Gamma),
+    ci_lower = quantile(Gamma, .025),
+    ci_upper = quantile(Gamma, .975),
+    gt_zero = if_else(ci_lower > 0 & ci_upper > 0, 1, 0),
+    lt_zero = if_else(ci_lower < 0 & ci_upper < 0, -1, 0)
+  ) %>% 
+  mutate(
+    ncov = rep(1:ncol(run$Data$Z), ncol(run$Data$X[[1]])),
+    nvar = sort(rep(1:ncol(run$Data$X[[1]]), ncol(run$Data$Z)))
+  )
+
+# Heatmap of Gamma matrix.
+posterior_means %>% 
+  mutate(
+    gt_lt_zero = gt_zero + lt_zero,
+    Coefficients = factor(gt_lt_zero, labels = c("Negative", "Not Significant", "Positive"))
+  ) %>% 
+  ggplot(aes(x = ncov, y = nvar, fill = Coefficients)) +
+  geom_raster() +
+  scale_fill_brewer(palette = "Blues") +
+  labs(
+    title = "Upper-Level Coefficient Matrix",
+    x = "Covariates",
+    y = "Attribute Levels"
+  )
+
+ggsave(
+  "coefficient_matrix.png",
+  path = here::here("Figures"),
+  width = 12, height = 6, units = "in"
+)
+
+# Which of the goeolocation covariates are significant?
+significant_covs <- posterior_means %>% 
+  filter(
+    ncov %in% c(1:22),
+    gt_zero != 0 | lt_zero != 0
+  ) %>% 
+  select(ncov, nvar, i)
+
+# Compare levels associated with the geolocation data.
+draws_all_three %>%
+  left_join(posterior_means, by = "i") %>% 
+  inner_join(significant_covs) %>% 
+  filter(ncov == 2) %>% 
+  ggplot(aes(x = Gamma, y = nvar)) + 
+  geom_halfeyeh(.width = c(.60, .95)) +
+  facet_wrap(
+    ~ as.factor(ncov), 
+    nrow = 10, 
+    ncol = 10,
+    scales = "free_x"
+  )
+
 # draws_centered <- fit_centered %>% 
 #   spread_draws(Theta[i, j]) %>% 
 #   mutate(model = "centered") %>% 
-#   select(model, .chain, .iteration, .draw, i, j, Theta) %>% 
-#   ungroup()
-# 
-# draws_noncentered <- fit_noncentered %>% 
-#   spread_draws(Theta[i, j]) %>% 
-#   mutate(model = "noncentered") %>% 
 #   select(model, .chain, .iteration, .draw, i, j, Theta) %>% 
 #   ungroup()
 
 draws <- draws_intercept %>% 
   bind_rows(draws_demographics) %>%
   bind_rows(draws_geolocation) %>%
-  bind_rows(draws_geo_demos)
-
-# Compare intercepts.
-# Compare specific attributes/levels across/within models.
-
-draws %>% 
+  bind_rows(draws_geo_demos) %>% 
+  bind_rows(draws_bnd_demos) %>% 
+  bind_rows(draws_all_three) %>% 
   mutate(
     model = factor(model),
     model = fct_relevel(
-      model, "Intercept", "Demographics", "Geolocation", "Geo-Demos"
+      model, 
+      "Intercept", 
+      "Demographics", 
+      "Geolocation", 
+      "Geo-Demos",
+      "Brand-Demos",
+      "All Three"
     )
-  ) %>%
-  ggplot(aes(x = Gamma, y = model)) + 
-  geom_halfeyeh(.width = c(.95, .95)) +
-  facet_wrap(
-    ~ as.factor(i), 
-    nrow = 30, 
-    ncol = 50,
-    scales = "free_x"
   )
 
-ggsave(
-  "mcmc_marginal_posteriors.png",
-  path = here::here("Figures"),
-  width = 12, height = 6, units = "in"
-)
-
+# ggsave(
+#   "mcmc_marginal_posteriors.png",
+#   path = here::here("Figures"),
+#   width = 12, height = 6, units = "in"
+# )

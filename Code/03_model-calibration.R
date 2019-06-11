@@ -7,11 +7,12 @@ final_data <- read_csv(here::here("Data", "218329_Final_Excel_050619.csv"))
 survey_design <- read_csv(here::here("Data", "survey_design.csv")) %>% select(-X1)
 dummy_design <- read_csv(here::here("Data", "dummy_design.csv")) %>% select(-X1)
 
-# Indicate the model to run.
-intercept <- 0
-geo_locat <- 0
-demo_vars <- 0
-geo_demos <- 1
+intercept <- 0 # Intercept-only.
+geo_locat <- 1 # Geolocation covariates.
+demo_vars <- 0 # Demographic covariates.
+geo_demos <- 0 # Geolocation and demographic covariates.
+bnd_demos <- 0 # Brand covariates.
+all_three <- 0 # Geolocation, demographic, and brand covariates.
 
 # Restructure choice data Y.
 Y <- final_data %>%
@@ -132,6 +133,39 @@ if (geo_demos == 1) {
     as.matrix()
   Z <- cbind(Z_geo, Z_demo)
 }
+if (bnd_demos == 1) {
+  Z_bnd <- final_data %>% 
+    select(contains("Q1x2"), contains("Q2x3"), Q2x1, Q2x2, Q2x8) %>%
+    as.matrix()
+  Z_demo <- final_data %>% 
+    select(Q4x1, Q4x4:Q4x6, Q4x9, Q4x10, Q4x12r1:Q4x12r4) %>% 
+    as.matrix()
+  Z <- cbind(Z_bnd, Z_demo)
+}
+if (all_three == 1) {
+  Z_geo <- tibble(intercept = rep(1, dim(X)[1])) %>% 
+    bind_cols(
+      final_data %>% 
+        select(Acura:Volkswagen)
+      # mutate(
+      #   dealer_visit = Acura	+ BMW	+ Chevrolet + Chrysler + Ferrari + `Ford Motor Company` +
+      #     `GMC (General Motors Company)` + Honda + `Hyundai Motor` + Infiniti	+ `Kia Motors` +
+      #     Lexus	+ Lincoln	+ Mazda	+ `Mercedes Benz`	+ `Mitsubishi Motors`	+ `Nissan North America` +
+      #     Subaru + `Tesla Motors`	+ Toyota + Volkswagen
+      # ) %>%
+      # select(dealer_visit) %>%
+      # mutate(dealer_visit = ifelse(dealer_visit >= 1, 1, 0))
+    ) %>% 
+    as.matrix()
+  Z_geo <- ifelse(Z_geo > 5, 1, Z_geo)
+  Z_demo <- final_data %>% 
+    select(Q4x1, Q4x4:Q4x6, Q4x9, Q4x10, Q4x12r1:Q4x12r4) %>% 
+    as.matrix()
+  Z_bnd <- final_data %>% 
+    select(contains("Q1x2"), contains("Q2x3"), Q2x1, Q2x2, Q2x8) %>%
+    as.matrix()
+  Z <- cbind(Z_geo, Z_demo, Z_bnd)
+}
 
 # MCMC --------------------------------------------------------------------
 # Load packages.
@@ -193,6 +227,8 @@ if (intercept == 1) write_rds(run, here::here("Output", "hmnl_intercept-100k_ho.
 if (geo_locat == 1) write_rds(run, here::here("Output", "hmnl_geo-locat-100k_ho.RDS"))
 if (demo_vars == 1) write_rds(run, here::here("Output", "hmnl_demo-vars-100k_ho.RDS"))
 if (geo_demos == 1) write_rds(run, here::here("Output", "hmnl_geo-demos-100k_ho.RDS"))
+if (bnd_demos == 1) write_rds(run, here::here("Output", "hmnl_bnd-demos-100k_ho.RDS"))
+if (all_three == 1) write_rds(run, here::here("Output", "hmnl_all-three-100k_ho.RDS"))
 
 # HMC ---------------------------------------------------------------------
 # Load packages.
