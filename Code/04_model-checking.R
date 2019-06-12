@@ -372,7 +372,7 @@ posterior_means %>%
   geom_raster() +
   scale_fill_brewer(palette = "Blues") +
   labs(
-    title = "Upper-Level Coefficient Matrix",
+    title = "Upper-Level Coefficient Matrix Estimates",
     x = "Covariates",
     y = "Attribute Levels"
   )
@@ -392,18 +392,53 @@ significant_covs <- posterior_means %>%
   select(ncov, nvar, i)
 
 # Compare levels associated with the geolocation data.
+Z_geo <- c(
+  "Acura", "BMW", "Chevrolet", "Chrysler", "Ferrari", "Ford", "GMC", "Honda", "Hyundai", "Infiniti", "Kia", 
+  "Lexus", "Lincoln", "Mazda", "Mercedes Benz", "Mitsubishi", "Nissan", "Subaru", "Tesla", "Toyota", "Volkswagen"
+)
+X_levels <- c(
+  "Jeep", "Toyota", "Ford", "Chevrolet", "Honda", "Nissan", "Subaru", "Hyundai", "GMC", "Kia", "Lexus", "Mazda", "Buick", "Mercedes-Benz", "Volkswagen", "BMW",
+  "2016-2018", "2013-2015", "2010-2012", "2007-2009", "Older than 2007",
+  "150,000-199,999", "100,000-149,999", "75,000-99,999", "50,000-74,999", "1,000-49,999", "0-1,000", 
+  "2 year", "4 year", "6 year",
+  "Sale by Owner", 
+  "21-30 MPG", "31-40 MPG", "41-50 MPG", 
+  "2 out of 5 stars", "3 out of 5 stars", "4 out of 5 stars", "5 out of 5 stars",
+  "Price"
+)
 draws_all_three %>%
   left_join(posterior_means, by = "i") %>% 
   inner_join(significant_covs) %>% 
-  filter(ncov == 2) %>% 
+  mutate(
+    ncov = factor(
+      ncov,
+      labels = Z_geo
+    ),
+    nvar = factor(
+      nvar,
+      labels = X_levels
+    )
+  ) %>% 
+  # filter(ncov %in% c("BMW", "Chevrolet", "Kia", "Toyota")) %>%
+  filter(ncov %in% c("GMC", "Lexus", "Subaru", "Volkswagen")) %>%
   ggplot(aes(x = Gamma, y = nvar)) + 
   geom_halfeyeh(.width = c(.60, .95)) +
+  geom_vline(xintercept = 0, color = "grey") +
   facet_wrap(
-    ~ as.factor(ncov), 
-    nrow = 10, 
-    ncol = 10,
+    ~ ncov,
+    nrow = 1,
     scales = "free_x"
+  ) +
+  labs(
+    title = "Marginal Posteriors by Geolocation Covariate",
+    y = "Attribute Levels"
   )
+
+ggsave(
+  "marginal_posteriors_02.png",
+  path = here::here("Figures"),
+  width = 12, height = 6, units = "in"
+)
 
 # draws_centered <- fit_centered %>% 
 #   spread_draws(Theta[i, j]) %>% 

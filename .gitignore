@@ -8,6 +8,7 @@ Data/*design*
 Data/*partial*
 Data/*final*
 Data/*sim_data*
+Data/*.xlsx
 Presentation/*.pptx
 
 # R Stuff
