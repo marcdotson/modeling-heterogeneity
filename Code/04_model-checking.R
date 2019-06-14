@@ -151,16 +151,48 @@ if (all_three == 1) {
 
 write_rds(model_fit_table, here::here("Figures", "model_fit_table.RDS"))
 
-model_fit_table %>% 
-  mutate(lmd_abs = abs(lmd)) %>% 
-  summarize(
-    min_lmd = min(lmd_abs),
-    min_dic = min(dic),
-    min_waic = min(waic),
-    max_hr = max(hr, na.rm = TRUE),
-    max_hp = max(hp, na.rm = TRUE)
-  )
+# Modify model fit tabel.
+modified_fit_table <- model_fit_table %>% 
+  filter(
+    model %in% c(
+      "Intercept 100k w/HO",
+      "More Geolocation 100k w/HO",
+      "More Geo-Demos 100k w/HO",
+      "Brands 100k w/HO",
+      "Geolocation, Brands, and Demographics 100k w/HO"
+    )
+  ) %>% 
+  mutate(
+    model = factor(model),
+    model = fct_recode(
+      model, 
+      "Intercept-Only" = "Intercept 100k w/HO",
+      "Geolocation" = "More Geolocation 100k w/HO",
+      "Geolocation and Demographics" = "More Geo-Demos 100k w/HO",
+      "Stated and Demographics" = "Brands 100k w/HO",
+      "Geolocation, Stated, and Demographics" = "Geolocation, Brands, and Demographics 100k w/HO"
+    )
+  ) %>%
+  select(-waic)
 
+modified_fit_table
+
+modified_fit_table %>% 
+  select(model, hr, hp) %>% 
+  mutate(model = reorder(model, hr)) %>% 
+  gather(key = stat, value = fit, hr, hp) %>% 
+  ggplot(aes(x = stat, y = fit, fill = model)) +
+  geom_col(position = "dodge", ) +
+  coord_flip() +
+  scale_fill_brewer(palette = "Blues") +
+  labs(title = "Predictive Fit")
+
+ggsave(
+  "predictive_fit.png",
+  path = here::here("Figures"),
+  width = 12, height = 6, units = "in"
+)
+  
 # HMC-Specific ------------------------------------------------------------
 # Stan diagnostics.
 source(here::here("Code", "stan_utility.R"))
@@ -371,6 +403,8 @@ posterior_means %>%
   ggplot(aes(x = ncov, y = nvar, fill = Coefficients)) +
   geom_raster() +
   scale_fill_brewer(palette = "Blues") +
+  scale_x_discrete(expand=c(0.001,0.001)) +
+  scale_y_discrete(expand=c(0.001,0.001)) +
   labs(
     title = "Upper-Level Coefficient Matrix Estimates",
     x = "Covariates",
@@ -397,13 +431,13 @@ Z_geo <- c(
   "Lexus", "Lincoln", "Mazda", "Mercedes Benz", "Mitsubishi", "Nissan", "Subaru", "Tesla", "Toyota", "Volkswagen"
 )
 X_levels <- c(
-  "Jeep", "Toyota", "Ford", "Chevrolet", "Honda", "Nissan", "Subaru", "Hyundai", "GMC", "Kia", "Lexus", "Mazda", "Buick", "Mercedes-Benz", "Volkswagen", "BMW",
-  "2016-2018", "2013-2015", "2010-2012", "2007-2009", "Older than 2007",
-  "150,000-199,999", "100,000-149,999", "75,000-99,999", "50,000-74,999", "1,000-49,999", "0-1,000", 
-  "2 year", "4 year", "6 year",
-  "Sale by Owner", 
-  "21-30 MPG", "31-40 MPG", "41-50 MPG", 
-  "2 out of 5 stars", "3 out of 5 stars", "4 out of 5 stars", "5 out of 5 stars",
+  str_c("Brand: ", c("Jeep", "Toyota", "Ford", "Chevrolet", "Honda", "Nissan", "Subaru", "Hyundai", "GMC", "Kia", "Lexus", "Mazda", "Buick", "Mercedes-Benz", "Volkswagen", "BMW")),
+  str_c("Year: ", c("2016-2018", "2013-2015", "2010-2012", "2007-2009", "Older than 2007")),
+  str_c("Miles: ", c("150,000-199,999", "100,000-149,999", "75,000-99,999", "50,000-74,999", "1,000-49,999", "0-1,000")),
+  str_c("Warranty: ", c("2 year", "4 year", "6 year")),
+  "Sale by Owner",
+  "21-30 MPG", "31-40 MPG", "41-50 MPG",
+  str_c("Safety: ", c("2 out of 5 stars", "3 out of 5 stars", "4 out of 5 stars", "5 out of 5 stars")),
   "Price"
 )
 draws_all_three %>%
@@ -419,10 +453,42 @@ draws_all_three %>%
       labels = X_levels
     )
   ) %>% 
-  # filter(ncov %in% c("BMW", "Chevrolet", "Kia", "Toyota")) %>%
+  filter(ncov %in% c("BMW", "Chevrolet", "Kia", "Toyota")) %>%
+  ggplot(aes(x = Gamma, y = nvar)) + 
+  geom_halfeyeh(.width = .95) +
+  geom_vline(xintercept = 0, color = "grey") +
+  facet_wrap(
+    ~ ncov,
+    nrow = 1,
+    scales = "free_x"
+  ) +
+  labs(
+    title = "Marginal Posteriors by Geolocation Covariate",
+    y = "Attribute Levels"
+  )
+
+ggsave(
+  "marginal_posteriors_01.png",
+  path = here::here("Figures"),
+  width = 12, height = 6, units = "in"
+)
+
+draws_all_three %>%
+  left_join(posterior_means, by = "i") %>% 
+  inner_join(significant_covs) %>% 
+  mutate(
+    ncov = factor(
+      ncov,
+      labels = Z_geo
+    ),
+    nvar = factor(
+      nvar,
+      labels = X_levels
+    )
+  ) %>% 
   filter(ncov %in% c("GMC", "Lexus", "Subaru", "Volkswagen")) %>%
   ggplot(aes(x = Gamma, y = nvar)) + 
-  geom_halfeyeh(.width = c(.60, .95)) +
+  geom_halfeyeh(.width = .95) +
   geom_vline(xintercept = 0, color = "grey") +
   facet_wrap(
     ~ ncov,

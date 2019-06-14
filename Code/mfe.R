@@ -68,7 +68,16 @@ choices %>%
   filter(visit_count<50) %>%
   ggplot(aes(x=as.factor(visit_count))) + 
   stat_count(geom = "bar") + 
-  labs(x="number of dealership visits")
+  labs(
+    title = "Count of Dealership Visits",
+    x = "number of dealership visits"
+  )
+
+ggsave(
+  "dealership_visits.png",
+  path = here::here("Figures"),
+  width = 6, height = 6, units = "in"
+)
 
 # differences in share of outside good
 choices %>%
@@ -108,10 +117,21 @@ geobrand %>%
   select(-total) %>%
   summarise_all(.,sum) %>%
   gather() %>%
-  ggplot(.,aes(x=reorder(key,-value),y=value)) +
+  ggplot(.,aes(x=reorder(key,value),y=value)) +
   geom_bar(stat="identity") + 
-  labs(x="",y="Number of Visits") + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  labs(
+    title = "Dealerships Visited",
+    x = "dealerships",
+    y="number of visits"
+  ) + 
+  # theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  coord_flip()
+
+ggsave(
+  "dealerships_visited.png",
+  path = here::here("Figures"),
+  width = 6, height = 6, units = "in"
+)
 
 # dealership visits by gender
 final_data %>%
@@ -134,8 +154,19 @@ final_data %>%
   ggplot(.,aes(x=Q2x2,y=freq)) + 
   geom_bar(stat="identity") + 
   scale_x_discrete(limits=c("very likely","somewhat likely","somewhat unlikely","very unlikely")) + 
-  labs(x="Likelihood of Purchasing a Used Vehicle",y="Proportion Making a Dealership Visit") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  labs(
+    title = "Likelihood of Purchasing a Used Vehicle", 
+    x = "",
+    y = "proportion making a dealership visit"
+  ) + 
+  # theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  coord_flip()
+
+ggsave(
+  "likelihood_used.png",
+  path = here::here("Figures"),
+  width = 12, height = 6, units = "in"
+)
 
 # dealership visits by number of vehicles currently owned
 final_data %>%
