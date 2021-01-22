@@ -55,5 +55,5 @@ sim_data <- list(
   Beta = Beta
 )
 
-readr::write_rds(sim_data, here::here("Data", "hmnl_sim_data.RDS"))
+readr::write_rds(sim_data, here::here("Data", "hmnl_sim_data.rds"))
 

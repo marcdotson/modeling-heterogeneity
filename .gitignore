@@ -14,6 +14,7 @@ Private/*
 # Files
 *.pdf
 *.xlsx
+*.docx
 *.pptx
 *.csv
-Data/hmnl_sim_data.rds
+*.rds
