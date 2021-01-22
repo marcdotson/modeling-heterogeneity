@@ -1,21 +1,19 @@
-# Folders
-Output/*
-Readings/*
-Temporary/*
-
-# Folder-specific
-Data/*design*
-Data/*partial*
-Data/*final*
-Data/*sim_data*
-Data/*.xlsx
-Presentation/*.pptx
-
-# R Stuff
+# R
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
 
-# Miscellaneous
+# Apple
 .DS_Store
+
+# Folders
+Output/*
+Private/*
+
+# Files
+*.pdf
+*.xlsx
+*.pptx
+*.csv
+
