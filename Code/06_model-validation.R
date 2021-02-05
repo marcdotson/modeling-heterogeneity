@@ -20,5 +20,6 @@ data %>%
   geom_bar()
 
 # Explore Recontact Data
-data %>% 
+rec_data <- data %>% 
   select(contains("REC_Q"))
+
