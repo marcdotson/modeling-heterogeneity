@@ -19,3 +19,6 @@ data %>%
   ggplot(aes(x = visits)) +
   geom_bar()
 
+# Explore Recontact Data
+data %>% 
+  select(contains("REC_Q"))
