@@ -1,0 +1,46 @@
+---
+title: "Informing Preference Heterogeneity with Stated Preferences or Passive Geolocation"
+subtitle: "Sawtooth Software Conference 2021"
+output: powerpoint_presentation
+---
+
+## Data Dictionary
+
+- Initial Survey
+- Geolocation Data
+- Ownership Data
+- Recontact Survey
+
+## Visualize Initial Survey
+
+Add plots?
+
+## Visualize Geolocation Data
+
+<center>
+![](../Figures/dealership_visits.png){width=300px}
+</center>
+
+---
+
+<center>
+![](../Figures/dealerships_visited.png){width=300px}
+</center>
+
+## Visualize Ownership Data
+
+- How many respondents own how many cars?
+- What is the count of years of cars owned?
+
+Add plots.
+
+## Visualize Recontact Survey
+
+- How many respondents responded to the recontact survey?
+
+Add plots.
+
+## Model Validation
+
+...
+
