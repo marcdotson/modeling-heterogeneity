@@ -1,0 +1,26 @@
+Data Dictionary
+================
+
+## Initial Survey
+
+  - `Q3_Version` Version of the design randomly assigned to the
+    respondent.
+  - `FinalConcept_Xr1c1:FinalConcept_Xr8c4` Design version details for
+    `X`th task with 8 attributes and 4 alternatives.
+  - `Q3_X` `X`th choice of 12 tasks.
+
+See `Auto Intenders Survey.docx` and `survey.md` for more details.
+
+## Geolocation Data
+
+  - `Acura:Volkswagen` The number of visits to the associated dealership
+    over six months.
+
+## Ownership Data
+
+  - `Vehicle 1 Make:Vehicle 8 Year` Ownership data for respondents with
+    up to 8 vehicles owned.
+
+## Recontact Survey
+
+See `Recontact Survey.docx` for more details.
