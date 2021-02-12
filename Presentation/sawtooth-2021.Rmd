@@ -13,7 +13,9 @@ output: powerpoint_presentation
 
 ## Visualize Initial Survey
 
-Add plots?
+- Who are the people who responded to the initial survey (breakdown by age, gender, income, location)?
+
+Add plots.
 
 ## Visualize Geolocation Data
 
@@ -31,13 +33,14 @@ Add plots?
 
 - How many respondents own how many cars?
 - What is the count of years of cars owned?
+- Who are the people we have ownership data for (breakdown by age, gender, income, location)?
 
 Add plots.
 
 ## Visualize Recontact Survey
 
 - How many respondents responded to the recontact survey?
-- ...
+- Who are the people who responded to the recontact survey (breakdown by age, gender, income, location)?
 
 Add plots.
 
