@@ -3,15 +3,16 @@ library(tidyverse)
 library(bayesplot)
 library(tidybayes)
 library(bayesm)
+library(mvtnorm)
 library(ggridges)
 
 # General MCMC ------------------------------------------------------------
-intercept <- 0 # Intercept-only.
+intercept <- 1 # Intercept-only.
 geo_locat <- 0 # Geolocation covariates.
 demo_vars <- 0 # Demographic covariates.
 geo_demos <- 0 # Geolocation and demographic covariates.
 bnd_demos <- 0 # Brand covariates.
-all_three <- 1 # Geolocation, demographic, and brand covariates.
+all_three <- 0 # Geolocation, demographic, and brand covariates.
 
 # Load model output.
 if (intercept == 1) run <- read_rds(here::here("Output", "hmnl_intercept-100k_ho.RDS"))
@@ -62,7 +63,7 @@ fit$llikedraw %>%
 model_fit_table <- read_rds(here::here("Figures", "model_fit_table.RDS"))
 
 # Compute in-sample model fit.
-source(here::here("Code", "model_fit.R"))
+source(here::here("Code", "Source", "model_fit.R"))
 
 if (intercept == 1) {
   temp <- model_fit(fit = fit, n_warmup = 500, Data = Data)
