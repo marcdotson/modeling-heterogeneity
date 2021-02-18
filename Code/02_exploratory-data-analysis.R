@@ -231,4 +231,81 @@ median(ownership_data$Num_children, na.rm = T)
 
 # Recontact Survey --------------------------------------------------------
 
+# Select just Recontact data
+rec_data <- data %>% 
+  select(starts_with("REC_Q")) %>% 
+  filter(is.na(REC_Q1) == FALSE)
+
+# Variables to discard after cleaning
+discard <- c(5:12, 16:23)
+
+recontact <- rec_data %>% 
+  rename(
+    Purchased = REC_Q1,              # 1 = Yes, 2 = No, 3 = Don't Remember
+    Make = REC_Q2_1,
+    Model = REC_Q2_2,
+    Year = REC_Q2_3
+  ) %>% 
+  mutate(
+    Factors_numeric = case_when(            #"Which of the following were important factors in deciding to purchase your car?"
+      REC_Q3_1 == 1 ~ 1,                      
+      REC_Q3_2 == 1 ~ 2, 
+      REC_Q3_3 == 1 ~ 3, 
+      REC_Q3_4 == 1 ~ 4, 
+      REC_Q3_5 == 1 ~ 5, 
+      REC_Q3_6 == 1 ~ 6, 
+      REC_Q3_7 == 1 ~ 7
+    ),
+    Factors_text = case_when(               # Same as before just text version
+      REC_Q3_1 == 1 ~ "Price",                      
+      REC_Q3_2 == 1 ~ "Brand", 
+      REC_Q3_3 == 1 ~ "Car Mileage", 
+      REC_Q3_4 == 1 ~ "Warranty", 
+      REC_Q3_5 == 1 ~ "Safety Rating", 
+      REC_Q3_6 == 1 ~ "Relationship with Dealership", 
+      REC_Q3_7 == 1 ~ "Other"
+    )
+  ) %>% 
+  rename(
+    Important_numeric = REC_Q4             # Most important Reason in Purchased 
+  ) %>% 
+  mutate(
+    Important_text = case_when(            # Same as before just text version
+      REC_Q4 == 1 ~ "Price",                      
+      REC_Q4 == 2 ~ "Brand", 
+      REC_Q4 == 3 ~ "Car Mileage", 
+      REC_Q4 == 4 ~ "Warranty", 
+      REC_Q4 == 5 ~ "Safety Rating", 
+      REC_Q4 == 6 ~ "Relationship with Dealership", 
+      REC_Q4 == 7 ~ "Other"
+    )
+  ) %>% 
+  rename(
+    Purchase_satisfaction = REC_Q5_1       # Satisfaction Scale 1:5
+  ) %>% 
+  mutate(
+    Why_no_purchase_numeric = case_when(
+      REC_Q6_1 == 1 ~ 1,                      
+      REC_Q6_2 == 1 ~ 2, 
+      REC_Q6_3 == 1 ~ 3, 
+      REC_Q6_4 == 1 ~ 4, 
+      REC_Q6_5 == 1 ~ 5, 
+      REC_Q6_6 == 1 ~ 6, 
+      REC_Q6_7 == 1 ~ 7
+    ),
+    Why_no_purchase_text = case_when(
+      REC_Q6_1 == 1 ~ "Not Driving Often",                      
+      REC_Q6_2 == 1 ~ "Income Dropped", 
+      REC_Q6_3 == 1 ~ "Medical Issues", 
+      REC_Q6_4 == 1 ~ "Family Situation", 
+      REC_Q6_5 == 1 ~ "Job Change", 
+      REC_Q6_6 == 1 ~ "Other", 
+      REC_Q6_7 == 1 ~ "Don't Know"
+    ),
+    No_purchase_explanation = REC_Q6_6_SP
+  )
+
+
+
+
 
