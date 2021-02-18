@@ -32,10 +32,38 @@ Add plots.
 ## Visualize Ownership Data
 
 - How many respondents own how many cars?
+
+<center>
+![](../Figures/Number of vehicles.png){width=300px}
+
+
+
 - What is the count of years of cars owned?
 - Who are the people we have ownership data for (breakdown by age, gender, income, location)?
 
 Add plots.
+
+- Likelihood of purchasing a used vehicle factored by level of education. 1 being the least educated
+<center>
+![](../Figures/Used vehicle likelihood by education.png){width=300px}
+
+
+-Likelihood of purchasing a new vehicle factored by level of education. 1 being the least educated
+<center>
+![](../Figures/New vehicle likelihood by education.png){width=300px}
+
+
+- Anticipated price of future vehicle by gender
+<center>
+![](../Figures/Anticipated vehicle price.png){width=300px}
+
+- Anticipated price of future vehicle by age
+<center>
+![](../Figures/Anticpiated vehicle price by age.png){width=300px}
+
+- Top 10 preferences in future car
+<center>
+![](../Figures/First choice car brands.png){width=300px}
 
 ## Visualize Recontact Survey
 
