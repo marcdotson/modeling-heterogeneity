@@ -233,19 +233,29 @@ median(ownership_data$Num_children, na.rm = T)
 
 # Select just Recontact data
 rec_data <- data %>% 
-  select(starts_with("REC_Q")) %>% 
+  select(uuid, starts_with("REC_Q")) %>% 
   filter(is.na(REC_Q1) == FALSE)
 
-# Variables to discard after cleaning
-discard <- c(5:12, 16:23)
+# How many people responded to recontact survey?
+rec_data %>%
+  summarize(
+    responses = nrow(.)
+  )
 
+
+# Variables to discard after cleaning
+discard <- c(6:13, 17:24)
+
+# Recode some Variables
 recontact <- rec_data %>% 
+  # Rename Variables for easier understanding
   rename(
     Purchased = REC_Q1,              # 1 = Yes, 2 = No, 3 = Don't Remember
     Make = REC_Q2_1,
     Model = REC_Q2_2,
     Year = REC_Q2_3
   ) %>% 
+  # Important Factors When Purchases Variable Recoding
   mutate(
     Factors_numeric = case_when(            #"Which of the following were important factors in deciding to purchase your car?"
       REC_Q3_1 == 1 ~ 1,                      
@@ -306,6 +316,53 @@ recontact <- rec_data %>%
   )
 
 
+## Visuals of Recontact Data
+
+rec_data %>%
+
+#there are a handful of outliers in the income data... Some reported making upwards of $10,000,000 a year. It could also be that they didn't enter in their salary as thousands
+ggplot(ownership_data, aes(y = Income, x = Num_vehicles, color = factor(Num_children))) +
+  geom_point()
+
+#this confirms the previous plot. The individual who reported a $10,000,000 salary is also anticipating paying a $1,000,000 for a car. Likely a misunderstanding of the survey
+ggplot(ownership_data, aes(x = Anticipated_car_price, y = Income, color = Education)) +
+  geom_point()
+
+ggplot(ownership_data, aes(x = Num_vehicles, y = Income, color = factor(Num_children))) +
+  geom_point() +
+  xlim(0, 5) +
+  ylim(c(0, 350))
+
+ggplot(ownership_data, aes(x = Num_vehicles, y = Income, color = Racial)) +
+  geom_point() +
+  xlim(0, 5) +
+  ylim(c(0, 350))
+
+#histogram of number of vehicles owned by the survey participants
+ggplot(ownership_data, aes(Num_vehicles)) +
+  geom_histogram()
+
+#Salary info
+#used median instead of mean to account for outliers
+median(ownership_data$Income) # $60,000
+
+ggplot(ownership_data, aes(Income)) +
+  geom_density() +
+  xlim(c(0, 350))
+
+#checking distribution of education levels
+#the median value is returned as associate's, but bachelor's is also quite frequent
+median(ownership_data$Education) 
+ggplot(ownership_data, aes(Education)) +
+  geom_density()
+
+#looking at number of children
+max(ownership_data$Num_children, na.rm = T)
+
+ggplot(ownership_data, aes(x = Num_children)) +
+  geom_density()
+
+median(ownership_data$Num_children, na.rm = T)
 
 
 
