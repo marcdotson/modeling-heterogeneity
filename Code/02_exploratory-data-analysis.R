@@ -242,9 +242,17 @@ rec_data %>%
     responses = nrow(.)
   )
 
+# How many people bought a car in last 18 months? 1=Yes 2=No
+rec_data %>% 
+  group_by(REC_Q1) %>% 
+  summarize(
+    n = n()
+  )
+
+## Clean Up Data Before Visualization
 
 # Variables to discard after cleaning
-discard <- c(6:13, 17:24)
+discard <- c(6:13, 17:44)
 
 # Recode some Variables
 recontact <- rec_data %>% 
@@ -276,9 +284,6 @@ recontact <- rec_data %>%
       REC_Q3_7 == 1 ~ "Other"
     )
   ) %>% 
-  rename(
-    Important_numeric = REC_Q4             # Most important Reason in Purchased 
-  ) %>% 
   mutate(
     Important_text = case_when(            # Same as before just text version
       REC_Q4 == 1 ~ "Price",                      
@@ -288,12 +293,14 @@ recontact <- rec_data %>%
       REC_Q4 == 5 ~ "Safety Rating", 
       REC_Q4 == 6 ~ "Relationship with Dealership", 
       REC_Q4 == 7 ~ "Other"
-    )
+    ),
+    Important_other = REC_Q4_7_SP          # Other Importan reason for purhcase
   ) %>% 
   rename(
+    Important_numeric = REC_Q4,             # Most important Reason in Purchased 
     Purchase_satisfaction = REC_Q5_1       # Satisfaction Scale 1:5
   ) %>% 
-  mutate(
+  mutate(                                  # Reason for not Purchasing
     Why_no_purchase_numeric = case_when(
       REC_Q6_1 == 1 ~ 1,                      
       REC_Q6_2 == 1 ~ 2, 
@@ -312,13 +319,62 @@ recontact <- rec_data %>%
       REC_Q6_6 == 1 ~ "Other", 
       REC_Q6_7 == 1 ~ "Don't Know"
     ),
-    No_purchase_explanation = REC_Q6_6_SP
-  )
+    No_purchase_explanation = REC_Q6_6_SP   # Reason for not Purchasing Explanation
+  ) %>% 
+  mutate(                                    # Dealerships Visited in Past 2 years
+    Dealership_visited_numeric = case_when(
+      REC_Q7_1 == 1 ~ 1,                      
+      REC_Q7_2 == 1 ~ 2, 
+      REC_Q7_3 == 1 ~ 3, 
+      REC_Q7_4 == 1 ~ 4, 
+      REC_Q7_5 == 1 ~ 5, 
+      REC_Q7_6 == 1 ~ 6, 
+      REC_Q7_7 == 1 ~ 7,
+      REC_Q7_8 == 1 ~ 8, 
+      REC_Q7_9 == 1 ~ 9,
+      REC_Q7_10 == 1 ~ 10, 
+      REC_Q7_11 == 1 ~ 11,
+      REC_Q7_12 == 1 ~ 12,
+      REC_Q7_13 == 1 ~ 13, 
+      REC_Q7_14 == 1 ~ 14,
+      REC_Q7_15 == 1 ~ 15,
+      REC_Q7_16 == 1 ~ 16, 
+      REC_Q7_17 == 1 ~ 17,
+      REC_Q7_18 == 1 ~ 18, 
+      REC_Q7_19 == 1 ~ 19
+    ),
+    Dealership_visited_text = case_when(
+      REC_Q7_1 == 1 ~ "Jeep",                      
+      REC_Q7_2 == 1 ~ "Toyota", 
+      REC_Q7_3 == 1 ~ "Ford", 
+      REC_Q7_4 == 1 ~ "Chevrolet", 
+      REC_Q7_5 == 1 ~ "Honda", 
+      REC_Q7_6 == 1 ~ "Nissan", 
+      REC_Q7_7 == 1 ~ "Subaru",
+      REC_Q7_8 == 1 ~ "Hyundai", 
+      REC_Q7_9 == 1 ~ "GMC",
+      REC_Q7_10 == 1 ~ "Kia", 
+      REC_Q7_11 == 1 ~ "Lexus",
+      REC_Q7_12 == 1 ~ "Mazda",
+      REC_Q7_13 == 1 ~ "Buick", 
+      REC_Q7_14 == 1 ~ "Mercedes-Benz",
+      REC_Q7_15 == 1 ~ "Volkswagen",
+      REC_Q7_16 == 1 ~ "BMW", 
+      REC_Q7_17 == 1 ~ "Other",
+      REC_Q7_18 == 1 ~ "None of the Above", 
+      REC_Q7_19 == 1 ~ "Don't Remember"
+    ),
+    Dealership_other = REC_Q7_17_SP 
+  ) %>% 
+  select(-discard)
+
+
+## FIlter by the Q7 for Q8 analysis
 
 
 ## Visuals of Recontact Data
 
-rec_data %>%
+rec_data
 
 #there are a handful of outliers in the income data... Some reported making upwards of $10,000,000 a year. It could also be that they didn't enter in their salary as thousands
 ggplot(ownership_data, aes(y = Income, x = Num_vehicles, color = factor(Num_children))) +
