@@ -233,7 +233,40 @@ median(ownership_data$Num_children, na.rm = T)
 
 # Select just Recontact data
 rec_data <- data %>% 
-  select(uuid, starts_with("REC_Q")) %>% 
+  mutate(
+    Racial = case_when(                         #creating a new column for race that is easier to perform analysis on
+      Q4x12r1 == 1 ~ "Asian", 
+      Q4x12r2 == 1 ~ "African American", 
+      Q4x12r3 == 1 ~ "Hispanic", 
+      Q4x12r4 == 1 ~ "White", 
+      Q4x12r5 == 1 ~ "Other"
+    )
+  ) %>% 
+  rename(
+    Gender = Q4x1,                          # 1 = Female, 2 = Male, 3 = other
+    Year_born = Q4x2, 
+    Income = Q4x4,                          # in thousands
+    Marital_status = Q4x5,                   # 1 = single, 2 = married, 3 = divorced, 4 = separated
+    Children = Q4x6,                        # 1 = yes, 2 = no
+    Num_children = Q4x7, 
+    Job = Q4x8, 
+    Education = Q4x9,                       # 1 = high school, 2 = associate's, 3 = bachelor's, 4 = graduate's, 5 = none of the above
+    Residence = Q4x10,                      # 1 = renter, 2 = owner
+  ) %>% 
+  select(
+    uuid, 
+    Racial, 
+    Gender, 
+    Year_born, 
+    Income, 
+    Marital_status, 
+    Children,
+    Num_children,
+    Job,
+    Education,
+    Residence,
+    starts_with("REC_Q")
+  ) %>% 
   filter(is.na(REC_Q1) == FALSE)
 
 # How many people responded to recontact survey?
@@ -252,7 +285,7 @@ rec_data %>%
 ## Clean Up Data Before Visualization
 
 # Variables to discard after cleaning
-discard <- c(6:13, 17:44)
+discard <- c(16:23, 27:54)
 
 # Recode some Variables
 recontact <- rec_data %>% 
@@ -294,7 +327,7 @@ recontact <- rec_data %>%
       REC_Q4 == 6 ~ "Relationship with Dealership", 
       REC_Q4 == 7 ~ "Other"
     ),
-    Important_other = REC_Q4_7_SP          # Other Importan reason for purhcase
+    Important_other = REC_Q4_7_SP          # Other Important reason for purchase
   ) %>% 
   rename(
     Important_numeric = REC_Q4,             # Most important Reason in Purchased 
@@ -369,56 +402,117 @@ recontact <- rec_data %>%
   select(-discard)
 
 
-## FIlter by the Q7 for Q8 analysis
-
+## Filter by the Q7 for Q8 analysis
 
 ## Visuals of Recontact Data
 
-rec_data
+# Income Distribution of Purchased in last 18 months
+recontact %>% 
+  filter(Income < 500) %>% 
+  ggplot(aes(x = Income)) +
+  geom_histogram() +
+  facet_grid(~Purchased)
 
-#there are a handful of outliers in the income data... Some reported making upwards of $10,000,000 a year. It could also be that they didn't enter in their salary as thousands
-ggplot(ownership_data, aes(y = Income, x = Num_vehicles, color = factor(Num_children))) +
-  geom_point()
+# Most important Factor when purchasing a car
+recontact %>% 
+  group_by(Factors_text) %>% 
+  summarize(
+    n = n()
+  ) %>% 
+  drop_na() %>% 
+  ggplot(aes(n, reorder(Factors_text, n))) +
+  geom_col()
 
-#this confirms the previous plot. The individual who reported a $10,000,000 salary is also anticipating paying a $1,000,000 for a car. Likely a misunderstanding of the survey
-ggplot(ownership_data, aes(x = Anticipated_car_price, y = Income, color = Education)) +
-  geom_point()
+## Price and Brand Most important Factor when purchasing car
 
-ggplot(ownership_data, aes(x = Num_vehicles, y = Income, color = factor(Num_children))) +
+# Another way of showing what is most Important reason 
+recontact %>% 
+  group_by(Important_text) %>% 
+  summarize(
+    n = n()
+  ) %>% 
+  drop_na() %>% 
+  ggplot(aes(n, reorder(Important_text, n))) +
+  geom_col()
+
+## Shouldn't this not be possible if it was filtered from above?
+
+# Checking out which features made people more satisfied with their purchase
+recontact %>% 
+  drop_na(Important_text) %>% 
+  ggplot(aes(Important_text, fill = factor(Purchase_satisfaction, ordered = TRUE))) +
+  geom_bar() +
+  coord_flip() +
+  theme(
+    legend.position = "none"
+  )
+
+## No relation between features and satisfaction
+
+# Reason for not purchasing
+recontact %>% 
+  group_by(Why_no_purchase_text) %>% 
+  summarize(
+    n = n()
+  ) %>% 
+  drop_na() %>% 
+  ggplot(aes(n, reorder(Why_no_purchase_text, n))) +
+  geom_col()
+
+## Income Dropping and Not driving enough is biggest reason for not purchasing
+
+# looking at what dealerships visited the most
+recontact %>% 
+  group_by(Dealership_visited_text) %>% 
+  summarize(
+    n = n()
+  ) %>% 
+  ggplot(aes(n, reorder(Dealership_visited_text, n))) +
+  geom_col()
+  
+
+recontact %>% 
+  filter(Income < 500) %>% 
+  drop_na(Purchase_satisfaction) %>% 
+  ggplot(aes(y = Income, x = Dealership_visited_text, color = factor(Purchase_satisfaction))) +
   geom_point() +
-  xlim(0, 5) +
-  ylim(c(0, 350))
+  coord_flip()
 
-ggplot(ownership_data, aes(x = Num_vehicles, y = Income, color = Racial)) +
-  geom_point() +
-  xlim(0, 5) +
-  ylim(c(0, 350))
-
-#histogram of number of vehicles owned by the survey participants
-ggplot(ownership_data, aes(Num_vehicles)) +
-  geom_histogram()
+# #this confirms the previous plot. The individual who reported a $10,000,000 salary is also anticipating paying a $1,000,000 for a car. Likely a misunderstanding of the survey
+# ggplot(recontact, aes(x = Anticipated_car_price, y = Income, color = Education)) +
+#   geom_point()
+# 
+# ggplot(recontact, aes(x = Num_vehicles, y = Income, color = factor(Num_children))) +
+#   geom_point() +
+#   xlim(0, 5) +
+#   ylim(c(0, 350))
+# 
+# ggplot(recontact, aes(x = Num_vehicles, y = Income, color = Racial)) +
+#   geom_point() +
+#   xlim(0, 5) +
+#   ylim(c(0, 350))
 
 #Salary info
 #used median instead of mean to account for outliers
-median(ownership_data$Income) # $60,000
+median(recontact$Income) # $80,000
 
-ggplot(ownership_data, aes(Income)) +
+ggplot(recontact, aes(Income)) +
   geom_density() +
   xlim(c(0, 350))
 
 #checking distribution of education levels
 #the median value is returned as associate's, but bachelor's is also quite frequent
-median(ownership_data$Education) 
-ggplot(ownership_data, aes(Education)) +
+median(recontact$Education) 
+ggplot(recontact, aes(Education)) +
   geom_density()
 
 #looking at number of children
-max(ownership_data$Num_children, na.rm = T)
+max(recontact$Num_children, na.rm = T)
 
-ggplot(ownership_data, aes(x = Num_children)) +
+ggplot(recontact, aes(x = Num_children)) +
   geom_density()
 
-median(ownership_data$Num_children, na.rm = T)
+median(recontact$Num_children, na.rm = T)
 
 
 
