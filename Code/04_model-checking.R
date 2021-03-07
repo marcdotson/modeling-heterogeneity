@@ -7,11 +7,11 @@ library(mvtnorm)
 library(ggridges)
 
 # General MCMC ------------------------------------------------------------
-intercept <- 1 # Intercept-only.
+intercept <- 0 # Intercept-only.
 geo_locat <- 0 # Geolocation covariates.
 demo_vars <- 0 # Demographic covariates.
 geo_demos <- 0 # Geolocation and demographic covariates.
-bnd_demos <- 0 # Brand covariates.
+bnd_demos <- 1 # Brand covariates.
 all_three <- 0 # Geolocation, demographic, and brand covariates.
 
 # Load model output.

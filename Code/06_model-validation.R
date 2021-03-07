@@ -1,6 +1,8 @@
 # Preamble ----------------------------------------------------------------
 # Load packages and functions.
 library(tidyverse)
+library(bayesm)
+library(mvtnorm)
 source(here::here("Code", "Source", "model_fit.R"))
 
 # Transform and Combine Recontact and Ownership Data ----------------------
@@ -116,12 +118,12 @@ validate_data <- validate_data %>%
   select(-model)
 
 # Load Output and Restructure Data ----------------------------------------
-intercept <- 1 # Intercept-only.
+intercept <- 0 # Intercept-only.
 geo_locat <- 0 # Geolocation covariates.
 demo_vars <- 0 # Demographic covariates.
 geo_demos <- 0 # Geolocation and demographic covariates.
 bnd_demos <- 0 # Brand covariates.
-all_three <- 0 # Geolocation, demographic, and brand covariates.
+all_three <- 1 # Geolocation, demographic, and brand covariates.
 
 # Load model output.
 if (intercept == 1) run <- read_rds(here::here("Output", "hmnl_intercept-100k_ho.RDS"))
@@ -130,6 +132,13 @@ if (demo_vars == 1) run <- read_rds(here::here("Output", "hmnl_demo-vars-100k_ho
 if (geo_demos == 1) run <- read_rds(here::here("Output", "hmnl_more-geo-demos-100k_ho.RDS"))
 if (bnd_demos == 1) run <- read_rds(here::here("Output", "hmnl_bnd-demos-100k_ho.RDS"))
 if (all_three == 1) run <- read_rds(here::here("Output", "hmnl_all-three-100k_ho.RDS"))
+
+# Model names.
+if (geo_locat == 1) model_name <- "Geolocation"
+if (demo_vars == 1) model_name <- "Demographics"
+if (geo_demos == 1) model_name <- "More Geo-Demos"
+if (bnd_demos == 1) model_name <- "Brands"
+if (all_three == 1) model_name <- "Geolocation, Brands, and Demographics"
 
 # Extract Data, Prior, Mcmc, and fit objects.
 Data <- run$Data
@@ -164,16 +173,6 @@ validate_data_ho
 
 # Just 16 hold-out respondents in the validation data vs. 156 respondents in-sample.
 
-
-
-
-# - Recode into a truncated validation task with an outside good.
-# - Draw the subset of respondents and the subset of parameters in computing predictive fit.
-
-# c("brand", "year", "miles", "warranty", "seller", "mpg", "safety", "price")
-# Q2_1 MAKE, Q2_3 YEAR
-
-
 # Create validation choice data Y and Y_ho.
 Y <- rep(1, nrow(validate_data_in_sample)) %>%
   as.matrix()
@@ -184,234 +183,166 @@ Y_ho <- rep(1, nrow(validate_data_ho)) %>%
 X <- array(
   data = NA,
   dim = c(
-    nrow(Y),  # Number of respondents.
-    1,        # Number of choice tasks per respondent.
-    (1 + 1),  # Number of product alternatives per choice task.
-    (11)      # Number of (estimable) attribute levels.
+    nrow(Y),    # Number of respondents.
+    1,          # Number of choice tasks per respondent.
+    (1 + 1),    # Number of product alternatives per choice task.
+    (16 + 5)    # Number of (estimable) attribute levels.
   )
 )
 X_ho <- array(
   data = NA,
   dim = c(
-    nrow(Y_ho),  # Number of respondents.
-    1,        # Number of choice tasks per respondent.
-    (1 + 1),  # Number of product alternatives per choice task.
-    (11)      # Number of (estimable) attribute levels.
+    nrow(Y_ho), # Number of respondents.
+    1,          # Number of choice tasks per respondent.
+    (1 + 1),    # Number of product alternatives per choice task.
+    (16 + 5)    # Number of (estimable) attribute levels.
   )
 )
 
 # Recode the validation_data into X and X_ho and add the outside option coded as all zeros.
+brands <- c(
+  "jeep", "toyota", "ford", "chevrolet", "honda", "nissan", "subaru", "hyundai", 
+  "gmc", "kia", "lexus", "mazda", "buick", "mercedes-benz", "volkswagen", "bmw"
+)
+years <- c(
+  # "2019 or newer" baseline level
+  "2016-2018", "2013-2015", "2010-2012", "2007-2009", "Older than 2007"
+)
 for (n in 1:dim(X)[1]) {
-  # Filter for respondent n.
-  X_n <- design %>% filter(version == final_data$Q3_Version[n])
-  for (s in 1:dim(X)[2]) {
-    # Filter for task s.
-    X_s <- X_n %>%
-      filter(task == s) %>%
-      mutate(brand1 = 0) %>%
-      select(brand1, brand2:price)
-    for (p in 1:(dim(X)[3]-1)) {
-      # Filter for task s and alt p brands.
-      X_p <- X_n %>%
-        filter(task == s, alt == p) %>%
-        select(brand2:brand16) %>%
-        as_vector()
-      # Fill in brand1
-      X_s[p, "brand1"] <- ifelse(sum(X_p) == 1, 0, 1)
-    }
-    # Save modified design, including outside option.
-    X[n, s,,] <- rbind(X_s, rep(0, ncol(X_s))) %>% as.matrix()
+  # Construct the two-attribute validation task.
+  for (brand in 1:16) {
+    X[n,,1,brand] <- ifelse(validate_data_in_sample[n,]$make == brands[brand], 1, 0)
   }
+  for (year in 1:5) {
+    X[n,,1,year + 16] <- ifelse(validate_data_in_sample[n,]$year == years[year], 1, 0)
+  }
+  # Include an outside option.
+  X[n,,2,] <- rep(0, dim(X)[4])
+}
+for (n in 1:dim(X_ho)[1]) {
+  # Construct the two-attribute validation task.
+  for (brand in 1:16) {
+    X_ho[n,,1,brand] <- ifelse(validate_data_ho[n,]$make == brands[brand], 1, 0)
+  }
+  for (year in 1:5) {
+    X_ho[n,,1,year + 16] <- ifelse(validate_data_ho[n,]$year == years[year], 1, 0)
+  }
+  # Include an outside option.
+  X_ho[n,,2,] <- rep(0, dim(X_ho)[4])
 }
 
-# Restructure covariates Z.
-if (intercept == 1) Z <- matrix(data = 1, nrow = dim(X)[1], ncol = 1)
-if (geo_locat == 1) {
-  Z <- tibble(intercept = rep(1, dim(X)[1])) %>% 
+# Use record to get the appropriate covariates Z and Z_ho (in the right order).
+Z <- validate_data_in_sample %>% 
+  select(record) %>% 
+  left_join(
     bind_cols(
-      final_data %>% 
-        select(Acura:Volkswagen)
-      # mutate(
-      #   dealer_visit = Acura	+ BMW	+ Chevrolet + Chrysler + Ferrari + `Ford Motor Company` +
-      #     `GMC (General Motors Company)` + Honda + `Hyundai Motor` + Infiniti	+ `Kia Motors` +
-      #     Lexus	+ Lincoln	+ Mazda	+ `Mercedes Benz`	+ `Mitsubishi Motors`	+ `Nissan North America` +
-      #     Subaru + `Tesla Motors`	+ Toyota + Volkswagen
-      # ) %>%
-      # select(dealer_visit) %>%
-      # mutate(dealer_visit = ifelse(dealer_visit >= 1, 1, 0))
-    ) %>% 
-    as.matrix()
-  Z <- ifelse(Z > 5, 1, Z)
-}
-if (demo_vars == 1) {
-  Z <- tibble(intercept = rep(1, dim(X)[1])) %>% 
+      tibble(record = in_sample_record),
+      as_tibble(Data$Z)
+    )
+  ) %>% 
+  select(-record) %>% 
+  as.matrix()
+Z_ho <- validate_data_ho %>% 
+  select(record) %>% 
+  left_join(
     bind_cols(
-      final_data %>% 
-        select(Q4x1, Q4x4:Q4x6, Q4x9, Q4x10, Q4x12r1:Q4x12r4)
-    ) %>% 
-    as.matrix()
-}
-if (geo_demos == 1) {
-  Z_geo <- tibble(intercept = rep(1, dim(X)[1])) %>% 
-    bind_cols(
-      final_data %>% 
-        select(Acura:Volkswagen)
-      # mutate(
-      #   dealer_visit = Acura	+ BMW	+ Chevrolet + Chrysler + Ferrari + `Ford Motor Company` +
-      #     `GMC (General Motors Company)` + Honda + `Hyundai Motor` + Infiniti	+ `Kia Motors` +
-      #     Lexus	+ Lincoln	+ Mazda	+ `Mercedes Benz`	+ `Mitsubishi Motors`	+ `Nissan North America` +
-      #     Subaru + `Tesla Motors`	+ Toyota + Volkswagen
-      # ) %>%
-      # select(dealer_visit) %>%
-      # mutate(dealer_visit = ifelse(dealer_visit >= 1, 1, 0))
-    ) %>% 
-    as.matrix()
-  Z_geo <- ifelse(Z_geo > 5, 1, Z_geo)
-  Z_demo <- final_data %>% 
-    select(Q4x1, Q4x4:Q4x6, Q4x9, Q4x10, Q4x12r1:Q4x12r4) %>% 
-    as.matrix()
-  Z <- cbind(Z_geo, Z_demo)
-}
-if (bnd_demos == 1) {
-  Z_bnd <- final_data %>% 
-    select(contains("Q1x2"), contains("Q2x3"), Q2x1, Q2x2, Q2x8) %>%
-    as.matrix()
-  Z_demo <- final_data %>% 
-    select(Q4x1, Q4x4:Q4x6, Q4x9, Q4x10, Q4x12r1:Q4x12r4) %>% 
-    as.matrix()
-  Z <- cbind(Z_bnd, Z_demo)
-}
-if (all_three == 1) {
-  Z_geo <- tibble(intercept = rep(1, dim(X)[1])) %>% 
-    bind_cols(
-      final_data %>% 
-        select(Acura:Volkswagen)
-      # mutate(
-      #   dealer_visit = Acura	+ BMW	+ Chevrolet + Chrysler + Ferrari + `Ford Motor Company` +
-      #     `GMC (General Motors Company)` + Honda + `Hyundai Motor` + Infiniti	+ `Kia Motors` +
-      #     Lexus	+ Lincoln	+ Mazda	+ `Mercedes Benz`	+ `Mitsubishi Motors`	+ `Nissan North America` +
-      #     Subaru + `Tesla Motors`	+ Toyota + Volkswagen
-      # ) %>%
-      # select(dealer_visit) %>%
-      # mutate(dealer_visit = ifelse(dealer_visit >= 1, 1, 0))
-    ) %>% 
-    as.matrix()
-  Z_geo <- ifelse(Z_geo > 5, 1, Z_geo)
-  Z_demo <- final_data %>% 
-    select(Q4x1, Q4x4:Q4x6, Q4x9, Q4x10, Q4x12r1:Q4x12r4) %>% 
-    as.matrix()
-  Z_bnd <- final_data %>% 
-    select(contains("Q1x2"), contains("Q2x3"), Q2x1, Q2x2, Q2x8) %>%
-    as.matrix()
-  Z <- cbind(Z_geo, Z_demo, Z_bnd)
+      tibble(record = ho_record),
+      as_tibble(Data$Z_ho)
+    )
+  ) %>% 
+  select(-record) %>% 
+  as.matrix()
+
+# Use record to get the appropriate covariates betadraws (in the right order).
+betadraw <- array(
+  data = NA,
+  dim = c(
+    nrow(Y),    # Number of respondents.
+    dim(X)[4],  # Number of (estimable) attribute levels.
+    1000        # Number of draws.
+  )
+)
+for (n in 1:dim(betadraw)[1]) {
+  # Identify which betadraws to extract.
+  validate_record_temp <- validate_data_in_sample %>% 
+    select(record) %>% 
+    pull() %>% 
+    .[n]
+  record_temp <- which(in_sample_record == validate_record_temp)
+  # Extract.
+  betadraw[n,,] <- fit$betadraw[record_temp,1:dim(betadraw)[2],]
 }
 
+# Create list-form validation Data and fit for computing the validation fit.
+Y_new <- vector(mode = "list", length = nrow(Y))
+Y_new_ho <- vector(mode = "list", length = nrow(Y_ho))
+X_new <- vector(mode = "list", length = nrow(Y))
+X_new_ho <- vector(mode = "list", length = nrow(Y_ho))
+for (resp in 1:nrow(Y)) {
+  Y_new[[resp]] <- matrix(Y[resp, ])
+  X_new[[resp]] <- rbind(X_new[[resp]], X[resp,1,,])
+}
+for (resp in 1:nrow(Y_ho)) {
+  Y_new_ho[[resp]] <- matrix(Y_ho[resp, ])
+  X_new_ho[[resp]] <- rbind(X_new_ho[[resp]], X_ho[resp,1,,])
+}
 
+Data_validate_in_sample <- list(
+  y = Y_new,
+  X = X_new,
+  Z = Z,
+  y_ho = Y_new,
+  X_ho = X_new,
+  Z_ho = Z
+)
+Data_validate_ho <- list(
+  y = Y_new,
+  X = X_new,
+  Z = Z,
+  y_ho = Y_new_ho,
+  X_ho = X_new_ho,
+  Z_ho = Z_ho
+)
+fit_validate <- list(
+  betadraw = betadraw,
+  llikedraw = fit$llikedraw,
+  Gammadraw = fit$Gammadraw[,1:(21 * ncol(Z))],
+  # Vbetadraw = fit$Vbetadraw[,1:(21 * 21)] Not symmetric without using the entire matrix.
+  Vbetadraw = matrix(rep(as.vector(diag(21)), 1000), nrow = 1000, byrow = TRUE)
+)
 
 # Compute Validation Fit --------------------------------------------------
-# # Create model validation table.
-# model_validation_table <- tibble(
-#   model = rep(NA, 6),
-#   train_hr = rep(NA, 6),
-#   train_hp = rep(NA, 6),
-#   test_hr = rep(NA, 6),
-#   test_hp = rep(NA, 6)
-# )
-# write_rds(model_validation_table, here::here("Figures", "model_validation_table.rds"))
-
 # Load model validation table.
-model_validation_table <- read_rds(here::here("Figures", "model_validation_table.rds"))
-
-temp <- model_fit(fit = fit, n_warmup = 500, Data = Data)
-
-
-
-
+if (intercept != 1) model_validation_table <- read_rds(here::here("Figures", "model_validation_table.rds"))
 
 if (intercept == 1) {
-  temp <- model_fit(fit = fit, n_warmup = 500, Data = Data)
-  model_fit_table <- model_fit_table %>% 
-    bind_rows(
-      tibble(
-        model = "Intercept 100k w/HO",
-        lmd = temp[1],
-        dic = temp[2],
-        waic = temp[3],
-        hr = temp[4],
-        hp = temp[5]
-      )
-    )
+  temp_in_sample <- model_fit(fit = fit_validate, n_warmup = 500, Data = Data_validate_in_sample)
+  temp_ho <- model_fit(fit = fit_validate, n_warmup = 500, Data = Data_validate_ho)
+  model_validation_table <- tibble(
+    model = "Intercept 100k w/HO and 1-Vehicle Validation",
+    train_hr = temp_in_sample[4],
+    train_hp = temp_in_sample[5],
+    test_hr = temp_ho[4],
+    test_hp = temp_ho[5]
+  )
 }
-if (geo_locat == 1) {
-  temp <- model_fit(fit = fit, n_warmup = 500, Data = Data)
-  model_fit_table <- model_fit_table %>% 
+if (intercept != 1) {
+  temp_in_sample <- model_fit(fit = fit_validate, n_warmup = 500, Data = Data_validate_in_sample)
+  temp_ho <- model_fit(fit = fit_validate, n_warmup = 500, Data = Data_validate_ho)
+  model_validation_table <- model_validation_table %>% 
     bind_rows(
       tibble(
-        model = "Geolocation 100k w/HO",
-        lmd = temp[1],
-        dic = temp[2],
-        waic = temp[3],
-        hr = temp[4],
-        hp = temp[5]
-      )
-    )
-}
-if (demo_vars == 1) {
-  temp <- model_fit(fit = fit, n_warmup = 500, Data = Data)
-  model_fit_table <- model_fit_table %>% 
-    bind_rows(
-      tibble(
-        model = "Demographics 100k w/HO",
-        lmd = temp[1],
-        dic = temp[2],
-        waic = temp[3],
-        hr = temp[4],
-        hp = temp[5]
-      )
-    )
-}
-if (geo_demos == 1) {
-  temp <- model_fit(fit = fit, n_warmup = 500, Data = Data)
-  model_fit_table <- model_fit_table %>% 
-    bind_rows(
-      tibble(
-        model = "More Geo-Demos 100k w/HO",
-        lmd = temp[1],
-        dic = temp[2],
-        waic = temp[3],
-        hr = temp[4],
-        hp = temp[5]
-      )
-    )
-}
-if (bnd_demos == 1) {
-  temp <- model_fit(fit = fit, n_warmup = 500, Data = Data)
-  model_fit_table <- model_fit_table %>% 
-    bind_rows(
-      tibble(
-        model = "Brands 100k w/HO",
-        lmd = temp[1],
-        dic = temp[2],
-        waic = temp[3],
-        hr = temp[4],
-        hp = temp[5]
-      )
-    )
-}
-if (all_three == 1) {
-  temp <- model_fit(fit = fit, n_warmup = 500, Data = Data)
-  model_fit_table <- model_fit_table %>% 
-    bind_rows(
-      tibble(
-        model = "Geolocation, Brands, and Demographics 100k w/HO",
-        lmd = temp[1],
-        dic = temp[2],
-        waic = temp[3],
-        hr = temp[4],
-        hp = temp[5]
+        model = str_c(model_name, " 100k w/HO and 1-Vehicle Validation"),
+        train_hr = temp_in_sample[4],
+        train_hp = temp_in_sample[5],
+        test_hr = temp_ho[4],
+        test_hp = temp_ho[5]
       )
     )
 }
 
-write_rds(model_fit_table, here::here("Figures", "model_fit_table.RDS"))
+model_validation_table
+
+# Write the model validation table.
+write_rds(model_validation_table, here::here("Figures", "model_validation_table.rds"))
 
