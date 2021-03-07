@@ -3,7 +3,7 @@
 library(tidyverse)
 library(bayesm)
 library(mvtnorm)
-source(here::here("Code", "Source", "model_fit.R"))
+source(here::here("Code", "Source", "validation_fit.R"))
 
 # Transform and Combine Recontact and Ownership Data ----------------------
 # Extract make, model, and year from the recontact survey.
@@ -57,36 +57,38 @@ overlap
 # Investigate ownership data for more than one car.
 validate_ownership %>% 
   group_by(record) %>% 
-  count(record) %>% 
-  ggplot(aes(x = n)) +
-  geom_bar()
-
+  count(vehicle) %>%
+  ungroup() %>% 
+  count(vehicle)
+  
 # Most respondents in the ownership data have purchased one or two cars. We
 # don't have any reason to give special credence to any one of the vehicles,
 # so let's just stick with the first of the vehicles listed.
 
 # Remove respondents from ownership data that overlap in the recontact data,
 # keeping just the first car listed in the ownership data.
-validate_ownership <- validate_ownership %>% 
-  filter(vehicle == 1) %>% 
-  anti_join(overlap, by = "record") %>% 
-  select(record, contains("ownership")) %>% 
+validate_ownership <- validate_ownership %>%
+  filter(vehicle == 1) %>%
+  # anti_join(overlap, by = "record") %>% # Or just use the ownership data ONLY.
+  select(record, contains("ownership")) %>%
   rename(
     make = ownership_make,
     model = ownership_model,
     year = ownership_year
   )
 
+# Remove respondents from recontact data that overlap in the ownership data.
 # Combine recontact and ownership data into validate_data.
 validate_data <- bind_rows(
-  validate_recontact %>% 
-    select(record, contains("recontact")) %>% 
+  validate_recontact %>% # Or just use the ownership data ONLY.
+    anti_join(overlap, by = "record") %>% 
+    select(record, contains("recontact")) %>%
     rename(
       make = recontact_make,
       model = recontact_model,
       year = recontact_year
     ),
-  validate_ownership
+  validate_ownership # Or just use the recontact data ONLY.
 )
 
 # Clean up validate_data to provide a brand and year consistent with the conjoint.
@@ -136,7 +138,7 @@ if (all_three == 1) run <- read_rds(here::here("Output", "hmnl_all-three-100k_ho
 # Model names.
 if (geo_locat == 1) model_name <- "Geolocation"
 if (demo_vars == 1) model_name <- "Demographics"
-if (geo_demos == 1) model_name <- "More Geo-Demos"
+if (geo_demos == 1) model_name <- "Geolocation and Demographics"
 if (bnd_demos == 1) model_name <- "Brands"
 if (all_three == 1) model_name <- "Geolocation, Brands, and Demographics"
 
@@ -172,6 +174,8 @@ validate_data_in_sample
 validate_data_ho
 
 # Just 16 hold-out respondents in the validation data vs. 156 respondents in-sample.
+# While just 4 hold-out respondents in recontact-only validation data vs. 40 in-sample.
+# While just 12 hold-out respondents in ownership-only validation data vs. 128 in-sample (no removing overlap).
 
 # Create validation choice data Y and Y_ho.
 Y <- rep(1, nrow(validate_data_in_sample)) %>%
@@ -287,15 +291,7 @@ for (resp in 1:nrow(Y_ho)) {
   X_new_ho[[resp]] <- rbind(X_new_ho[[resp]], X_ho[resp,1,,])
 }
 
-Data_validate_in_sample <- list(
-  y = Y_new,
-  X = X_new,
-  Z = Z,
-  y_ho = Y_new,
-  X_ho = X_new,
-  Z_ho = Z
-)
-Data_validate_ho <- list(
+Data_validate <- list(
   y = Y_new,
   X = X_new,
   Z = Z,
@@ -314,29 +310,29 @@ fit_validate <- list(
 # Compute Validation Fit --------------------------------------------------
 # Load model validation table.
 if (intercept != 1) model_validation_table <- read_rds(here::here("Figures", "model_validation_table.rds"))
+# if (intercept != 1) model_validation_table <- read_rds(here::here("Figures", "model_validation_table_recontact.rds"))
+# if (intercept != 1) model_validation_table <- read_rds(here::here("Figures", "model_validation_table_ownership.rds"))
 
 if (intercept == 1) {
-  temp_in_sample <- model_fit(fit = fit_validate, n_warmup = 500, Data = Data_validate_in_sample)
-  temp_ho <- model_fit(fit = fit_validate, n_warmup = 500, Data = Data_validate_ho)
+  temp <- validation_fit(fit = fit_validate, n_warmup = 500, Data = Data_validate)
   model_validation_table <- tibble(
     model = "Intercept 100k w/HO and 1-Vehicle Validation",
-    train_hr = temp_in_sample[4],
-    train_hp = temp_in_sample[5],
-    test_hr = temp_ho[4],
-    test_hp = temp_ho[5]
+    train_hr = temp[1],
+    train_hp = temp[2],
+    test_hr = temp[3],
+    test_hp = temp[4]
   )
 }
 if (intercept != 1) {
-  temp_in_sample <- model_fit(fit = fit_validate, n_warmup = 500, Data = Data_validate_in_sample)
-  temp_ho <- model_fit(fit = fit_validate, n_warmup = 500, Data = Data_validate_ho)
+  temp <- validation_fit(fit = fit_validate, n_warmup = 500, Data = Data_validate)
   model_validation_table <- model_validation_table %>% 
     bind_rows(
       tibble(
         model = str_c(model_name, " 100k w/HO and 1-Vehicle Validation"),
-        train_hr = temp_in_sample[4],
-        train_hp = temp_in_sample[5],
-        test_hr = temp_ho[4],
-        test_hp = temp_ho[5]
+        train_hr = temp[1],
+        train_hp = temp[2],
+        test_hr = temp[3],
+        test_hp = temp[4]
       )
     )
 }
@@ -345,4 +341,6 @@ model_validation_table
 
 # Write the model validation table.
 write_rds(model_validation_table, here::here("Figures", "model_validation_table.rds"))
+# write_rds(model_validation_table, here::here("Figures", "model_validation_table_recontact.rds"))
+# write_rds(model_validation_table, here::here("Figures", "model_validation_table_ownership.rds"))
 
