@@ -65,6 +65,13 @@ Add plots.
 <center>
 ![](../Figures/First choice car brands.png){width=300px}
 
+Racial distribution of survey participants
+<center>
+![](../Figures/Racial distribution.png){width = 300px}
+Number of children
+<center>
+![](../Figures/Children pie chart.png){width = 300px}
+
 ## Visualize Recontact Survey
 
 - How many respondents responded to the recontact survey?
