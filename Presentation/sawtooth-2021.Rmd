@@ -52,12 +52,21 @@ Add plots.
 <center>
 ![](../Figures/New vehicle likelihood by education.png){width=300px}
 
+Likelihood of purchasing a new vehicle by race
+<center>
+![](../Figures/New vehicle by race.png){width = 300px}
+
+Likelihood of purchasing a used vehicle by race
+<center>
+![](../Figures/Used vehicle by race.png){width = 300px}
+
+
 
 - Anticipated price of future vehicle by gender
 <center>
 ![](../Figures/Anticipated vehicle price.png){width=300px}
 
-- Anticipated price of future vehicle by age
+- Anticipated price of future vehicle by age with gender as factor
 <center>
 ![](../Figures/Anticpiated vehicle price by age.png){width=300px}
 
