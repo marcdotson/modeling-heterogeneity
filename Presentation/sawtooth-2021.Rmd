@@ -23,6 +23,7 @@ Add plots.
 ![](../Figures/dealership_visits.png){width=300px}
 </center>
 
+
 ---
 
 <center>
@@ -87,6 +88,27 @@ Number of children
 - Who are the people who responded to the recontact survey (breakdown by age, gender, income, location)?
 
 Add plots.
+
+
+
+![](../Figures/Income distribution from recontact.png){width = 300px}
+
+Dealerships visited by those in the recontact survey
+![](../Figures/Dealerships visited.png){width = 300px}
+
+
+The following two are different plots of the most important factors in their purchase decision
+
+![](../Figures/Most important factors 1.png){width = 300px}
+![](../Figures/Most important factors 2.png){width = 300px}
+
+Reasons for not purchasing
+![](../Figures/Reason for not purchasing.png){width = 300px}
+
+
+What features made respondents more satisfied with their purchase
+![](../Figures/Purchase satisfaction.png){width = 300px}
+
 
 ## Model Validation
 
