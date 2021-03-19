@@ -44,51 +44,69 @@ validate_ownership <- read_csv(here::here("Data", "218329_Final_Excel_050619_wit
   ) %>% 
   mutate(vehicle = as.numeric(vehicle))
 
-# Investigate overlap between ownership and recontact data.
-overlap <- validate_ownership %>% 
-  inner_join(validate_recontact)
+# # Investigate overlap between ownership and recontact data.
+# overlap <- validate_ownership %>% 
+#   inner_join(validate_recontact)
+# 
+# overlap
+# 
+# # There are only 18 respondents who overlap between recontact and ownership.
+# # In 17/18 cases (see record 239) the recontact survey indicates a newer purchase
+# # than the ownership data, so we will use the overlap from recontact instead.
+# 
+# # Investigate ownership data for more than one car.
+# validate_ownership %>% 
+#   group_by(record) %>% 
+#   count(vehicle) %>%
+#   ungroup() %>% 
+#   count(vehicle)
+#   
+# # Most respondents in the ownership data have purchased one or two cars. We
+# # don't have any reason to give special credence to any one of the vehicles,
+# # so let's just stick with the first of the vehicles listed.
+# 
+# # Remove respondents from ownership data that overlap in the recontact data,
+# # keeping just the first car listed in the ownership data.
+# validate_ownership <- validate_ownership %>%
+#   filter(vehicle == 1) %>%
+#   # anti_join(overlap, by = "record") %>% # Or just use the ownership data ONLY.
+#   select(record, contains("ownership")) %>%
+#   rename(
+#     make = ownership_make,
+#     model = ownership_model,
+#     year = ownership_year
+#   )
+# 
+# # Remove respondents from recontact data that overlap in the ownership data.
+# # Combine recontact and ownership data into validate_data.
+# validate_data <- bind_rows(
+#   validate_recontact %>% # Or just use the ownership data ONLY.
+#     anti_join(overlap, by = "record") %>% 
+#     select(record, contains("recontact")) %>%
+#     rename(
+#       make = recontact_make,
+#       model = recontact_model,
+#       year = recontact_year
+#     ),
+#   validate_ownership # Or just use the recontact data ONLY.
+# )
 
-overlap
-
-# There are only 18 respondents who overlap between recontact and ownership.
-# In 17/18 cases (see record 239) the recontact survey indicates a newer purchase
-# than the ownership data, so we will use the overlap from recontact instead.
-
-# Investigate ownership data for more than one car.
-validate_ownership %>% 
-  group_by(record) %>% 
-  count(vehicle) %>%
-  ungroup() %>% 
-  count(vehicle)
-  
-# Most respondents in the ownership data have purchased one or two cars. We
-# don't have any reason to give special credence to any one of the vehicles,
-# so let's just stick with the first of the vehicles listed.
-
-# Remove respondents from ownership data that overlap in the recontact data,
-# keeping just the first car listed in the ownership data.
-validate_ownership <- validate_ownership %>%
-  filter(vehicle == 1) %>%
-  # anti_join(overlap, by = "record") %>% # Or just use the ownership data ONLY.
-  select(record, contains("ownership")) %>%
-  rename(
-    make = ownership_make,
-    model = ownership_model,
-    year = ownership_year
-  )
-
-# Remove respondents from recontact data that overlap in the ownership data.
-# Combine recontact and ownership data into validate_data.
+# Combine all recontact and all ownership data.
 validate_data <- bind_rows(
-  validate_recontact %>% # Or just use the ownership data ONLY.
-    anti_join(overlap, by = "record") %>% 
+  validate_recontact %>%
     select(record, contains("recontact")) %>%
     rename(
       make = recontact_make,
       model = recontact_model,
       year = recontact_year
     ),
-  validate_ownership # Or just use the recontact data ONLY.
+  validate_ownership %>%
+    select(record, contains("ownership")) %>%
+    rename(
+      make = ownership_make,
+      model = ownership_model,
+      year = ownership_year
+    )
 )
 
 # Clean up validate_data to provide a brand and year consistent with the conjoint.
@@ -173,67 +191,143 @@ validate_data_ho <- validate_data %>%
 validate_data_in_sample
 validate_data_ho
 
+# ONE VEHICLE
 # Just 16 hold-out respondents in the validation data vs. 156 respondents in-sample.
 # While just 4 hold-out respondents in recontact-only validation data vs. 40 in-sample.
 # While just 12 hold-out respondents in ownership-only validation data vs. 128 in-sample (no removing overlap).
 
-# Create validation choice data Y and Y_ho.
-Y <- rep(1, nrow(validate_data_in_sample)) %>%
-  as.matrix()
-Y_ho <- rep(1, nrow(validate_data_ho)) %>%
-  as.matrix()
+# ALL VEHICLES
+# We have 36 hold-out observations and 302 in-sample observations (repeat respondents and no removing overlap).
 
-# Create the design X and X_ho.
-X <- array(
-  data = NA,
-  dim = c(
-    nrow(Y),    # Number of respondents.
-    1,          # Number of choice tasks per respondent.
-    (1 + 1),    # Number of product alternatives per choice task.
-    (16 + 5)    # Number of (estimable) attribute levels.
-  )
-)
-X_ho <- array(
-  data = NA,
-  dim = c(
-    nrow(Y_ho), # Number of respondents.
-    1,          # Number of choice tasks per respondent.
-    (1 + 1),    # Number of product alternatives per choice task.
-    (16 + 5)    # Number of (estimable) attribute levels.
-  )
-)
-
-# Recode the validation_data into X and X_ho and add the outside option coded as all zeros.
+# Create a validation task with all possible combinations of brands and years.
 brands <- c(
   "jeep", "toyota", "ford", "chevrolet", "honda", "nissan", "subaru", "hyundai", 
   "gmc", "kia", "lexus", "mazda", "buick", "mercedes-benz", "volkswagen", "bmw"
 )
 years <- c(
-  # "2019 or newer" baseline level
-  "2016-2018", "2013-2015", "2010-2012", "2007-2009", "Older than 2007"
+  "2019 or newer", "2016-2018", "2013-2015", "2010-2012", "2007-2009", "Older than 2007"
 )
-for (n in 1:dim(X)[1]) {
-  # Construct the two-attribute validation task.
-  for (brand in 1:16) {
-    X[n,,1,brand] <- ifelse(validate_data_in_sample[n,]$make == brands[brand], 1, 0)
-  }
-  for (year in 1:5) {
-    X[n,,1,year + 16] <- ifelse(validate_data_in_sample[n,]$year == years[year], 1, 0)
-  }
-  # Include an outside option.
-  X[n,,2,] <- rep(0, dim(X)[4])
+temp <- NULL
+for (i in 1:length(years)) temp <- c(temp, rep(years[i], length(brands)))
+X_named <- tibble(
+  brands = rep(brands, length(years)),
+  years = temp
+)
+X_full <- bind_cols(
+  # Account for the first level for the brand intercept.
+  tibble(brands1 = rep(c(1, rep(0, length(brands) - 1)), length(years))),
+  # All possible combinations of brands and years.
+  as_tibble(
+    model.matrix(
+      ~ brands + years, 
+      data.frame(
+        brands = gl(length(brands), 1, length(brands) * length(years)), 
+        years = gl(length(years), length(brands))
+      )
+    )[,-1]
+  )
+)
+
+# Populate the design matrices X and X_ho and choice data Y and Y_ho.
+X <- array(
+  data = NA,
+  dim = c(
+    nrow(validate_data_in_sample), # Number of respondents.
+    1,                             # Number of choice tasks per respondent.
+    (nrow(X_full) + 1),            # Number of alternatives per choice task.
+    ncol(X_full)                   # Number of (estimable) attribute levels.
+  )
+)
+Y <- rep(NA, nrow(validate_data_in_sample)) %>% as.matrix()
+X_ho <- array(
+  data = NA,
+  dim = c(
+    nrow(validate_data_ho),        # Number of respondents.
+    1,                             # Number of choice tasks per respondent.
+    (nrow(X_full) + 1),            # Number of product alternatives per choice task.
+    ncol(X_full)                   # Number of (estimable) attribute levels.
+  )
+)
+Y_ho <- rep(NA, nrow(validate_data_ho)) %>% as.matrix()
+for (n in 1:nrow(Y)) {
+  # Identify the choice.
+  Y[n] <- which(
+    pull(validate_data_in_sample[n,2]) == X_named[,1] & 
+      pull(validate_data_in_sample[n,3]) == X_named[,2]
+  )
+  # Add an outside option.
+  X[n,1,,] <- as.matrix(rbind(X_full, rep(0, dim(X)[4])))
 }
-for (n in 1:dim(X_ho)[1]) {
-  # Construct the two-attribute validation task.
-  for (brand in 1:16) {
-    X_ho[n,,1,brand] <- ifelse(validate_data_ho[n,]$make == brands[brand], 1, 0)
-  }
-  for (year in 1:5) {
-    X_ho[n,,1,year + 16] <- ifelse(validate_data_ho[n,]$year == years[year], 1, 0)
-  }
-  # Include an outside option.
-  X_ho[n,,2,] <- rep(0, dim(X_ho)[4])
+for (n in 1:nrow(Y_ho)) {
+  # Identify the choice.
+  Y_ho[n] <- which(
+    pull(validate_data_ho[n,2]) == X_named[,1] & 
+      pull(validate_data_ho[n,3]) == X_named[,2]
+  )
+  # Add an outside option.
+  X_ho[n,1,,] <- as.matrix(rbind(X_full, rep(0, dim(X_ho)[4])))
 }
+
+# # Create validation choice data Y and Y_ho.
+# Y <- rep(1, nrow(validate_data_in_sample)) %>%
+#   as.matrix()
+# Y_ho <- rep(1, nrow(validate_data_ho)) %>%
+#   as.matrix()
+# 
+# # Create the design X and X_ho.
+# X <- array(
+#   data = NA,
+#   dim = c(
+#     nrow(Y),    # Number of respondents.
+#     1,          # Number of choice tasks per respondent.
+#     (1 + 1),    # Number of product alternatives per choice task.
+#     (16 + 5)    # Number of (estimable) attribute levels.
+#   )
+# )
+# X_ho <- array(
+#   data = NA,
+#   dim = c(
+#     nrow(Y_ho), # Number of respondents.
+#     1,          # Number of choice tasks per respondent.
+#     (1 + 1),    # Number of product alternatives per choice task.
+#     (16 + 5)    # Number of (estimable) attribute levels.
+#   )
+# )
+# 
+# # Specify the brand intercept levels and year levels.
+# brands <- c(
+#   # Brand intercept, so no baseline level.
+#   "jeep", "toyota", "ford", "chevrolet", "honda", "nissan", "subaru", "hyundai", 
+#   "gmc", "kia", "lexus", "mazda", "buick", "mercedes-benz", "volkswagen", "bmw"
+# )
+# years <- c(
+#   # "2019 or newer" baseline level
+#   "2016-2018", "2013-2015", "2010-2012", "2007-2009", "Older than 2007"
+# )
+# 
+# # Recode the validation_data into X and X_ho and add the outside option coded as all zeros.
+# for (n in 1:dim(X)[1]) {
+#   # Construct the two-attribute validation task.
+#   for (brand in 1:16) {
+#     X[n,,1,brand] <- ifelse(validate_data_in_sample[n,]$make == brands[brand], 1, 0)
+#   }
+#   for (year in 1:5) {
+#     X[n,,1,year + 16] <- ifelse(validate_data_in_sample[n,]$year == years[year], 1, 0)
+#   }
+#   # Include an outside option.
+#   X[n,,2,] <- rep(0, dim(X)[4])
+# }
+# for (n in 1:dim(X_ho)[1]) {
+#   # Construct the two-attribute validation task.
+#   for (brand in 1:16) {
+#     X_ho[n,,1,brand] <- ifelse(validate_data_ho[n,]$make == brands[brand], 1, 0)
+#   }
+#   for (year in 1:5) {
+#     X_ho[n,,1,year + 16] <- ifelse(validate_data_ho[n,]$year == years[year], 1, 0)
+#   }
+#   # Include an outside option.
+#   X_ho[n,,2,] <- rep(0, dim(X_ho)[4])
+# }
 
 # Use record to get the appropriate covariates Z and Z_ho (in the right order).
 Z <- validate_data_in_sample %>% 
@@ -309,14 +403,12 @@ fit_validate <- list(
 
 # Compute Validation Fit --------------------------------------------------
 # Load model validation table.
-if (intercept != 1) model_validation_table <- read_rds(here::here("Figures", "model_validation_table.rds"))
-# if (intercept != 1) model_validation_table <- read_rds(here::here("Figures", "model_validation_table_recontact.rds"))
-# if (intercept != 1) model_validation_table <- read_rds(here::here("Figures", "model_validation_table_ownership.rds"))
+if (intercept != 1) model_validation_table <- read_rds(here::here("Figures", "model_validation_table_final.rds"))
 
 if (intercept == 1) {
   temp <- validation_fit(fit = fit_validate, n_warmup = 500, Data = Data_validate)
   model_validation_table <- tibble(
-    model = "Intercept 100k w/HO and 1-Vehicle Validation",
+    model = "Intercept 100k w/HO and All-Vehicle, All-Combos Validation",
     train_hr = temp[1],
     train_hp = temp[2],
     test_hr = temp[3],
@@ -328,7 +420,7 @@ if (intercept != 1) {
   model_validation_table <- model_validation_table %>% 
     bind_rows(
       tibble(
-        model = str_c(model_name, " 100k w/HO and 1-Vehicle Validation"),
+        model = str_c(model_name, " 100k w/HO and All-Vehicle, All-Combos Validation"),
         train_hr = temp[1],
         train_hp = temp[2],
         test_hr = temp[3],
@@ -340,7 +432,5 @@ if (intercept != 1) {
 model_validation_table
 
 # Write the model validation table.
-write_rds(model_validation_table, here::here("Figures", "model_validation_table.rds"))
-# write_rds(model_validation_table, here::here("Figures", "model_validation_table_recontact.rds"))
-# write_rds(model_validation_table, here::here("Figures", "model_validation_table_ownership.rds"))
+write_rds(model_validation_table, here::here("Figures", "model_validation_table_final.rds"))
 
