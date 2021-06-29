@@ -1,5 +1,5 @@
 ---
-title: "Do You Even Rmd, Bruh? A Paper Template"
+title: "Informing Preference Heterogeneity with Stated Preferences or Passive Geolocation"
 author: 
 - name: "Author 1"
   affiliation: "University of Whatever"
@@ -8,7 +8,7 @@ author:
   affiliation: "University of Whatever"
   email: "author2@example.edu"
 date: "November 26, 2020"
-abstract: "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+abstract: "We examine two data sources for informing the upper-level model of heterogeneity in a conjoint study about car purchase. The first is stated brand preferences via traditional rating scales in the survey. The second is passive observational data on visits to car dealerships by brand. Both of these measures will come from a sample of 1,000 Dynata panelists who have agreed to be passively tracked and are in the market for a new or used vehicle in the next six months.."
 keywords:
 - "Keyword 1"
 - "Keyword 2"
@@ -18,9 +18,9 @@ output:
     keep_tex: true
     template: mktg-article.tex
     citation_package: natbib
-params:
-  data_path: "../Data/ad_data.rds"
-  data_name: "Advertising Data"
+# params:
+#   data_path: "../Data/ad_data.rds"
+#   data_name: "Advertising Data"
 ---
 
 ```{r setup, echo=FALSE, warning=FALSE, message=FALSE}

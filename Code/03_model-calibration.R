@@ -7,8 +7,8 @@ final_data <- read_csv(here::here("Data", "218329_Final_Excel_050619.csv"))
 survey_design <- read_csv(here::here("Data", "survey_design.csv")) %>% select(-X1)
 dummy_design <- read_csv(here::here("Data", "dummy_design.csv")) %>% select(-X1)
 
-intercept <- 0 # Intercept-only.
-geo_locat <- 1 # Geolocation covariates.
+intercept <- 1 # Intercept-only.
+geo_locat <- 0 # Geolocation covariates.
 demo_vars <- 0 # Demographic covariates.
 geo_demos <- 0 # Geolocation and demographic covariates.
 bnd_demos <- 0 # Brand covariates.

@@ -14,6 +14,8 @@ functions in `/Source`.
   - `03_model-calibration.R` Calibrate the model.
   - `04_model-checking.R` Perform model checking.
   - `05_model-free-evidence.R` Explore model-free evidence.
+  - `06_model-validation.R` Validating the model results using ownership
+    and the recontact survey data.
 
 ## Source
 

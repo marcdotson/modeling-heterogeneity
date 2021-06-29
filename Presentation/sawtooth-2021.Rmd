@@ -1,0 +1,116 @@
+---
+title: "Informing Preference Heterogeneity with Stated Preferences or Passive Geolocation"
+subtitle: "Sawtooth Software Conference 2021"
+output: powerpoint_presentation
+---
+
+## Data Dictionary
+
+- Initial Survey
+- Geolocation Data
+- Ownership Data
+- Recontact Survey
+
+## Visualize Initial Survey
+
+- Who are the people who responded to the initial survey (breakdown by age, gender, income, location)?
+
+Add plots.
+
+## Visualize Geolocation Data
+
+<center>
+![](../Figures/dealership_visits.png){width=300px}
+</center>
+
+
+---
+
+<center>
+![](../Figures/dealerships_visited.png){width=300px}
+</center>
+
+## Visualize Ownership Data
+
+- How many respondents own how many cars?
+
+<center>
+![](../Figures/Number of vehicles.png){width=300px}
+
+
+
+- What is the count of years of cars owned?
+- Who are the people we have ownership data for (breakdown by age, gender, income, location)?
+
+Add plots.
+
+- Likelihood of purchasing a used vehicle factored by level of education. 1 being the least educated
+<center>
+![](../Figures/Used vehicle likelihood by education.png){width=300px}
+
+
+-Likelihood of purchasing a new vehicle factored by level of education. 1 being the least educated
+<center>
+![](../Figures/New vehicle likelihood by education.png){width=300px}
+
+Likelihood of purchasing a new vehicle by race
+<center>
+![](../Figures/New vehicle by race.png){width = 300px}
+
+Likelihood of purchasing a used vehicle by race
+<center>
+![](../Figures/Used vehicle by race.png){width = 300px}
+
+
+
+- Anticipated price of future vehicle by gender
+<center>
+![](../Figures/Anticipated vehicle price.png){width=300px}
+
+- Anticipated price of future vehicle by age with gender as factor
+<center>
+![](../Figures/Anticpiated vehicle price by age.png){width=300px}
+
+- Top 10 preferences in future car
+<center>
+![](../Figures/First choice car brands.png){width=300px}
+
+Racial distribution of survey participants
+<center>
+![](../Figures/Racial distribution.png){width = 300px}
+Number of children
+<center>
+![](../Figures/Children pie chart.png){width = 300px}
+
+## Visualize Recontact Survey
+
+- How many respondents responded to the recontact survey?
+- Who are the people who responded to the recontact survey (breakdown by age, gender, income, location)?
+
+Add plots.
+
+
+
+![](../Figures/Income distribution from recontact.png){width = 300px}
+
+Dealerships visited by those in the recontact survey
+![](../Figures/Dealerships visited.png){width = 300px}
+
+
+The following two are different plots of the most important factors in their purchase decision
+
+![](../Figures/Most important factors 1.png){width = 300px}
+![](../Figures/Most important factors 2.png){width = 300px}
+
+Reasons for not purchasing
+![](../Figures/Reason for not purchasing.png){width = 300px}
+
+
+What features made respondents more satisfied with their purchase
+![](../Figures/Purchase satisfaction.png){width = 300px}
+
+
+## Model Validation
+
+...
+
