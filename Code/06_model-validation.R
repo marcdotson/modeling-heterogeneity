@@ -181,6 +181,9 @@ ho_record <- final_record %>%
   select(record) %>% 
   pull()
 
+records <- list(in_sample_record, ho_record)
+write_rds(records, here::here("Output", "Records.rds"))
+
 # Investigate how many in-sample and hold-out respondents we have in validate_data.
 validate_data_in_sample <- validate_data %>% 
   filter(record %in% in_sample_record)
