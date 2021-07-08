@@ -512,6 +512,7 @@ draws_all_three %>%
   ) +
   labs(
     title = "Marginal Posteriors by Geolocation Covariate",
+    subtitle = "Geolocation Covariates Indicate Dealerships Visited",
     y = "Attribute Levels"
   )
 
