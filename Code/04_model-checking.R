@@ -11,8 +11,8 @@ intercept <- 0 # Intercept-only.
 geo_locat <- 0 # Geolocation covariates.
 demo_vars <- 0 # Demographic covariates.
 geo_demos <- 0 # Geolocation and demographic covariates.
-bnd_demos <- 1 # Brand covariates.
-all_three <- 0 # Geolocation, demographic, and brand covariates.
+bnd_demos <- 0 # Brand covariates.
+all_three <- 1 # Geolocation, demographic, and brand covariates.
 
 # Load model output.
 if (intercept == 1) run <- read_rds(here::here("Output", "hmnl_intercept-100k_ho.RDS"))
@@ -314,7 +314,7 @@ draws_geolocation <- as_tibble(run$fit$Gammadraw) %>%
   arrange(.iteration) %>% 
   filter(.iteration > 500)
 
-# Geolocation-demograpics run.
+# Geolocation-demographics run.
 run <- read_rds(here::here("Output", "hmnl_more-geo-demos-100k_ho.RDS"))
 colnames(run$fit$Gammadraw) <- str_c("Gamma[", c(1:ncol(run$fit$Gammadraw)), ",1]")
 draws_geo_demos <- as_tibble(run$fit$Gammadraw) %>% 
@@ -403,11 +403,24 @@ posterior_means %>%
   ) %>% 
   ggplot(aes(x = ncov, y = nvar, fill = Coefficients)) +
   geom_raster() +
+  # Geolocation
+  geom_rect(aes(xmin = 0, xmax = 23,
+                ymin = 0, ymax = 40),
+            color = "#FF3300", fill = NA, size = 2) +
+  # Demographics
+  geom_rect(aes(xmin = 23, xmax = 33,
+                ymin = 0, ymax = 40),
+            color = "#FF3300", fill = NA, size = 2) +
+  # Stated
+  geom_rect(aes(xmin = 33, xmax = 56,
+                ymin = 0, ymax = 40),
+            color = "#FF3300", fill = NA, size = 2) +
   scale_fill_brewer(palette = "Blues") +
   scale_x_discrete(expand=c(0.001,0.001)) +
   scale_y_discrete(expand=c(0.001,0.001)) +
   labs(
     title = "Upper-Level Coefficient Matrix Estimates",
+    subtitle = "Geolocation, Stated, and Demographics Covariates",
     x = "Covariates",
     y = "Attribute Levels"
   )
@@ -465,6 +478,7 @@ draws_all_three %>%
   ) +
   labs(
     title = "Marginal Posteriors by Geolocation Covariate",
+    subtitle = "Geolocation Covariates Indicate Dealerships Visited",
     y = "Attribute Levels"
   )
 
